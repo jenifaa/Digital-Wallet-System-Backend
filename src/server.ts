@@ -1,5 +1,5 @@
 import { Server } from "http";
-import express from "express";
+
 import mongoose from "mongoose";
 import { envVars } from "./app/config/env";
 import app from "./app";
@@ -23,3 +23,31 @@ const startServer = async () => {
 (async () => {
   await startServer();
 })();
+
+process.on("SIGTERM", () => {
+  console.log("SIGTERM detected");
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
+  process.exit(1);
+});
+process.on("unhandledRejection", () => {
+  console.log("UnhandledRejection detected");
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
+  process.exit(1);
+});
+process.on("uncaughtException", () => {
+  console.log("uncaughtException detected");
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
+  process.exit(1);
+});
