@@ -22,10 +22,10 @@ passport.use(
         }
 
         if (
-          isUserExist.isACtive === IsActive.BLOCKED ||
-          isUserExist.isACtive === IsActive.INACTIVE
+          isUserExist.isActive === IsActive.BLOCKED ||
+          isUserExist.isActive === IsActive.INACTIVE
         ) {
-         return  done(`User is ${isUserExist.isACtive}`);
+         return  done(`User is ${isUserExist.isActive}`);
         }
         if (isUserExist.isDeleted) {
           return done("User is deleted")

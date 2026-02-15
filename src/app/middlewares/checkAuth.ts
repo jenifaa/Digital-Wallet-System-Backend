@@ -31,12 +31,12 @@ export const checkAuth =
         throw new AppError(httpStatus.BAD_GATEWAY, "User is not verified");
       }
       if (
-        isUserExist.isACtive === IsActive.BLOCKED ||
-        isUserExist.isACtive === IsActive.INACTIVE
+        isUserExist.isActive === IsActive.BLOCKED ||
+        isUserExist.isActive === IsActive.INACTIVE
       ) {
         throw new AppError(
           httpStatus.BAD_REQUEST,
-          `User is ${isUserExist.isACtive}`
+          `User is ${isUserExist.isActive}`
         );
       }
       if (isUserExist.isDeleted) {
