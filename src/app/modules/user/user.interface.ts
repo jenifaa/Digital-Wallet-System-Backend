@@ -16,11 +16,11 @@ export enum IsActive {
   BLOCKED = "BLOCKED",
 }
 export interface IUser {
-  _id: Types.ObjectId;
+  _id?: Types.ObjectId;
   name: string;
   email: string;
   password?: string;
-  phone: string;
+  phone?: string;
   picture?: string;
   address?: string;
   isDeleted?: boolean;
