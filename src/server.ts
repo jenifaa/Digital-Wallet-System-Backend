@@ -1,5 +1,5 @@
 import { Server } from "http";
-
+import passport from "passport"
 import mongoose from "mongoose";
 import { envVars } from "./app/config/env";
 import app from "./app";
@@ -7,7 +7,7 @@ import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 
 let server: Server;
 
-
+passport.initialize()
 
 const startServer = async () => {
   try {
