@@ -12,4 +12,19 @@ router.post(
   checkAuth(...Object.values(Role)),
   AuthControllers.changePassword
 );
+router.post(
+  "/set-password",
+  checkAuth(...Object.values(Role)),
+  AuthControllers.setPassword
+);
+router.post(
+  "/forget-password",
+
+  AuthControllers.forgetPassword
+);
+router.post(
+  "/reset-password",
+  checkAuth(...Object.values(Role)),
+  AuthControllers.resetPassword
+);
 export const AuthRoutes = router;
