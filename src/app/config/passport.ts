@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import  bcryptjs  from 'bcryptjs';
+import bcryptjs from "bcryptjs";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { User } from "../modules/user/user.model";
@@ -17,22 +17,22 @@ passport.use(
         if (!isUserExist) {
           return done(null, false, { message: "User does not exist" });
         }
-        if (!isUserExist.isVerified) {
-         return done("User is not verified");
-        }
+        // if (!isUserExist.isVerified) {
+        //   return done(null, false, { message: "User is not verified" });
+        // }
 
         if (
           isUserExist.isActive === IsActive.BLOCKED ||
           isUserExist.isActive === IsActive.INACTIVE
         ) {
-         return  done(`User is ${isUserExist.isActive}`);
+          return done(`User is ${isUserExist.isActive}`);
         }
         if (isUserExist.isDeleted) {
-          return done("User is deleted")
+          return done(null, false, { message: "User is deleted" });
         }
 
         const isGoogleAuthenticated = isUserExist.auths.some(
-          (providerObjects) => providerObjects.provider == "google"
+          (providerObjects) => providerObjects.provider == "google",
         );
 
         if (isGoogleAuthenticated && !isUserExist.password) {
@@ -41,9 +41,9 @@ passport.use(
               "You have authenticated through google login. So , if you want login with credentials , then at first login with  google and set a password for you gmail",
           });
         }
-        const isPasswordMatched = bcryptjs.compare(
+        const isPasswordMatched = await bcryptjs.compare(
           password as string,
-          isUserExist.password as string
+          isUserExist.password as string,
         );
 
         if (!isPasswordMatched) {
@@ -54,10 +54,9 @@ passport.use(
         console.log(error);
         done(error);
       }
-    }
-  )
+    },
+  ),
 );
-
 
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
   done(null, user._id);
