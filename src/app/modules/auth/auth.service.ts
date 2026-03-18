@@ -4,7 +4,7 @@ import  httpStatus  from 'http-status-codes';
 import AppError from "../../errorHelpers/AppError";
 import { IUser } from "../user/user.interface";
 import { User } from "../user/user.model";
-import { createUserToken } from '../../utils/userTokens';
+import { createNewAccessTokenWithRefreshToken, createUserToken } from '../../utils/userTokens';
 import { JwtPayload } from 'jsonwebtoken';
 import { envVars } from '../../config/env';
 
@@ -38,7 +38,15 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
   };
 };
 
+const getNewAccessToken = async (refreshToken: string) => {
+  const newAccessToken = await createNewAccessTokenWithRefreshToken(
+    refreshToken
+  );
 
+  return {
+    accessToken: newAccessToken,
+  };
+};
 const changePassword = async (
   oldPassword: string,
   newPassword: string,
@@ -66,7 +74,9 @@ const changePassword = async (
   return true;
 };
 
+
 export const AuthServices = {
   credentialsLogin,
-  changePassword
+  changePassword,
+  getNewAccessToken
 };
