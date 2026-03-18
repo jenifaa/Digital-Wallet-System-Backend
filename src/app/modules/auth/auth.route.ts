@@ -10,7 +10,12 @@ router.post("/logout", AuthControllers.logout);
 router.post(
   "/change-password",
   checkAuth(...Object.values(Role)),
-  AuthControllers.changePassword
+  AuthControllers.changePassword,
+);
+router.post(
+  "/reset-password",
+  checkAuth(...Object.values(Role)),
+  AuthControllers.resetPassword,
 );
 
 export const AuthRoutes = router;
