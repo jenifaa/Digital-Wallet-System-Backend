@@ -1,157 +1,208 @@
-import mongoose from "mongoose";
+// import mongoose from "mongoose";
 import { Wallet } from "./wallet.model";
-import { IWallet, WalletStatus } from "./wallet.interface";
-import { User } from "../user/user.model";
+import { WalletStatus } from "./wallet.interface";
+import AppError from "../../errorHelpers/AppError";
+import httpStatus from "http-status-codes";
 
-interface TransactionOptions {
-  session?: mongoose.ClientSession;
-}
+//
+// 👤 Get Wallet by User ID
+//
+const getWalletByUser = async (userId: string) => {
+  const wallet = await Wallet.findOne({ user: userId });
 
-class WalletService {
-  //
-  // 👤 Get Wallet by owner ID
-  //
-  async getWalletByOwner(ownerId: string, ownerRole: "USER" | "AGENT") {
-    const wallet = await Wallet.findOne({ owner: ownerId, ownerRole });
-    if (!wallet) throw new Error("Wallet not found");
-    return wallet;
+  if (!wallet) {
+    throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
   }
 
-  //
-  // 💰 Add Money (User top-up)
-  //
-  async addMoney(ownerId: string, amount: number) {
-    const wallet = await Wallet.findOne({ owner: ownerId });
-    if (!wallet) throw new Error("Wallet not found");
-    if (wallet.status === WalletStatus.BLOCKED)
-      throw new Error("Wallet is blocked");
+  return wallet;
+};
 
-    wallet.balance += amount;
-    wallet.lastTransactionAt = new Date();
-    await wallet.save();
-    return wallet;
+//
+// 💰 Add Money (User top-up)
+//
+const addMoney = async (userId: string, amount: number) => {
+  const wallet = await Wallet.findOne({ user: userId });
+
+  if (!wallet) throw new AppError(404, "Wallet not found");
+
+  if (wallet.status === WalletStatus.BLOCKED) {
+    throw new AppError(400, "Wallet is blocked");
   }
 
-  //
-  // 💸 Withdraw Money (User)
-  //
-  async withdraw(ownerId: string, amount: number) {
-    const wallet = await Wallet.findOne({ owner: ownerId });
-    if (!wallet) throw new Error("Wallet not found");
-    if (wallet.status === WalletStatus.BLOCKED)
-      throw new Error("Wallet is blocked");
-    if (wallet.balance < amount)
-      throw new Error("Insufficient balance");
+  wallet.balance += amount;
+  wallet.lastTransactionAt = new Date();
 
-    wallet.balance -= amount;
-    wallet.lastTransactionAt = new Date();
-    await wallet.save();
-    return wallet;
-  }
+  await wallet.save();
 
-  //
-  // 🔁 Send Money (User to User)
-  //
-  async sendMoney(senderId: string, receiverId: string, amount: number) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    try {
-      const senderWallet = await Wallet.findOne({ owner: senderId }).session(session);
-      const receiverWallet = await Wallet.findOne({ owner: receiverId }).session(session);
+  return wallet;
+};
 
-      if (!senderWallet || !receiverWallet)
-        throw new Error("Sender or receiver wallet not found");
+//
+// 💸 Withdraw Money (User)
+//
+// const withdraw = async (userId: string, amount: number) => {
+//   const wallet = await Wallet.findOne({ user: userId });
 
-      if (senderWallet.status === WalletStatus.BLOCKED)
-        throw new Error("Sender wallet is blocked");
+//   if (!wallet) throw new AppError(404, "Wallet not found");
 
-      if (receiverWallet.status === WalletStatus.BLOCKED)
-        throw new Error("Receiver wallet is blocked");
+//   if (wallet.status === WalletStatus.BLOCKED) {
+//     throw new AppError(400, "Wallet is blocked");
+//   }
 
-      if (senderWallet.balance < amount)
-        throw new Error("Insufficient balance");
+//   if (wallet.balance < amount) {
+//     throw new AppError(400, "Insufficient balance");
+//   }
 
-      // Update balances
-      senderWallet.balance -= amount;
-      receiverWallet.balance += amount;
+//   wallet.balance -= amount;
+//   wallet.lastTransactionAt = new Date();
 
-      senderWallet.lastTransactionAt = new Date();
-      receiverWallet.lastTransactionAt = new Date();
+//   await wallet.save();
 
-      await senderWallet.save({ session });
-      await receiverWallet.save({ session });
+//   return wallet;
+// };
 
-      await session.commitTransaction();
-      session.endSession();
+//
+// 🔁 Send Money (User → User)
+//
+// const sendMoney = async (
+//   senderId: string,
+//   receiverId: string,
+//   amount: number
+// ) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
 
-      return { senderWallet, receiverWallet };
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw error;
-    }
-  }
+//   try {
+//     const senderWallet = await Wallet.findOne({ user: senderId }).session(session);
+//     const receiverWallet = await Wallet.findOne({ user: receiverId }).session(session);
 
-  //
-  // 🏦 Agent Cash-In (Add money to user wallet)
-  //
-  async cashIn(agentId: string, userId: string, amount: number) {
-    // Optional: track agent commission here
-    const userWallet = await Wallet.findOne({ owner: userId });
-    if (!userWallet) throw new Error("User wallet not found");
-    if (userWallet.status === WalletStatus.BLOCKED)
-      throw new Error("User wallet is blocked");
+//     if (!senderWallet || !receiverWallet) {
+//       throw new AppError(404, "Sender or receiver wallet not found");
+//     }
 
-    userWallet.balance += amount;
-    userWallet.lastTransactionAt = new Date();
-    await userWallet.save();
-    return userWallet;
-  }
+//     if (senderWallet.status === WalletStatus.BLOCKED) {
+//       throw new AppError(400, "Sender wallet is blocked");
+//     }
 
-  //
-  // 🏧 Agent Cash-Out (Withdraw money from user wallet)
-  //
-  async cashOut(agentId: string, userId: string, amount: number) {
-    const userWallet = await Wallet.findOne({ owner: userId });
-    if (!userWallet) throw new Error("User wallet not found");
-    if (userWallet.status === WalletStatus.BLOCKED)
-      throw new Error("User wallet is blocked");
-    if (userWallet.balance < amount)
-      throw new Error("Insufficient balance");
+//     if (receiverWallet.status === WalletStatus.BLOCKED) {
+//       throw new AppError(400, "Receiver wallet is blocked");
+//     }
 
-    userWallet.balance -= amount;
-    userWallet.lastTransactionAt = new Date();
-    await userWallet.save();
-    return userWallet;
-  }
+//     if (senderWallet.balance < amount) {
+//       throw new AppError(400, "Insufficient balance");
+//     }
 
-  //
-  // 👑 Admin: Update Wallet Status
-  //
-  async updateWalletStatus(walletId: string, status: WalletStatus) {
-    const wallet = await Wallet.findById(walletId);
-    if (!wallet) throw new Error("Wallet not found");
+//     // 💸 Transfer
+//     senderWallet.balance -= amount;
+//     receiverWallet.balance += amount;
 
-    wallet.status = status;
-    await wallet.save();
-    return wallet;
-  }
+//     senderWallet.lastTransactionAt = new Date();
+//     receiverWallet.lastTransactionAt = new Date();
 
-  //
-  // 👑 Admin: Get All Wallets
-  //
-  async getAllWallets() {
-    return Wallet.find({});
-  }
+//     await senderWallet.save({ session });
+//     await receiverWallet.save({ session });
 
-  //
-  // 👑 Admin: Get Single Wallet
-  //
-  async getSingleWallet(walletId: string) {
-    const wallet = await Wallet.findById(walletId);
-    if (!wallet) throw new Error("Wallet not found");
-    return wallet;
-  }
-}
+//     await session.commitTransaction();
+//     session.endSession();
 
-export const walletService = new WalletService();
+//     return {
+//       message: "Money sent successfully",
+//     };
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+//     throw error;
+//   }
+// };
+
+//
+// 🏦 Agent Cash-In
+//
+// const cashIn = async (agentId: string, userId: string, amount: number) => {
+//   const userWallet = await Wallet.findOne({ user: userId });
+
+//   if (!userWallet) throw new AppError(404, "User wallet not found");
+
+//   if (userWallet.status === WalletStatus.BLOCKED) {
+//     throw new AppError(400, "User wallet is blocked");
+//   }
+
+//   userWallet.balance += amount;
+//   userWallet.lastTransactionAt = new Date();
+
+//   await userWallet.save();
+
+//   return userWallet;
+// };
+
+//
+// 🏧 Agent Cash-Out
+//
+// const cashOut = async (agentId: string, userId: string, amount: number) => {
+//   const userWallet = await Wallet.findOne({ user: userId });
+
+//   if (!userWallet) throw new AppError(404, "User wallet not found");
+
+//   if (userWallet.status === WalletStatus.BLOCKED) {
+//     throw new AppError(400, "User wallet is blocked");
+//   }
+
+//   if (userWallet.balance < amount) {
+//     throw new AppError(400, "Insufficient balance");
+//   }
+
+//   userWallet.balance -= amount;
+//   userWallet.lastTransactionAt = new Date();
+
+//   await userWallet.save();
+
+//   return userWallet;
+// };
+
+//
+// 👑 Admin: Update Wallet Status
+//
+// const updateWalletStatus = async (
+//   walletId: string,
+//   status: WalletStatus
+// ) => {
+//   const wallet = await Wallet.findById(walletId);
+
+//   if (!wallet) throw new AppError(404, "Wallet not found");
+
+//   wallet.status = status;
+
+//   await wallet.save();
+
+//   return wallet;
+// };
+
+//
+// 👑 Admin: Get All Wallets
+//
+// const getAllWallets = async () => {
+//   return Wallet.find({});
+// };
+
+//
+// 👑 Admin: Get Single Wallet
+//
+// const getSingleWallet = async (walletId: string) => {
+//   const wallet = await Wallet.findById(walletId);
+
+//   if (!wallet) throw new AppError(404, "Wallet not found");
+
+//   return wallet;
+// };
+
+export const walletService = {
+  getWalletByUser,
+  addMoney,
+  // withdraw,
+  // sendMoney,
+  // cashIn,
+  // cashOut,
+  // updateWalletStatus,
+  // getAllWallets,
+  // getSingleWallet,
+};

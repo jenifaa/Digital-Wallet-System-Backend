@@ -2,38 +2,27 @@
 import { Request, Response } from "express";
 import { walletService } from "./wallet.service";
 
-
-//
-// 👤 Get Current User/Agent Wallet
-//
- const getMyWallet = async (req: Request, res: Response) => {
+ const addMoney = async (req: Request, res: Response) => {
   try {
-    const userId = req.body._id;
-    const role = req.body.role;
-    const wallet = await walletService.getWalletByOwner(userId, role);
+    const userId = req.params.id;
+    const { amount } = req.body;
+    const wallet = await walletService.addMoney(userId as string, amount);
     res.status(200).json({ success: true, data: wallet });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-export const WalletController = {
-  getMyWallet
-}
-
-//
-// 💰 Add Money (Top-up)
-//
-// export const addMoney = async (req: Request, res: Response) => {
-//   try {
-//     const userId = req.user._id;
-//     const { amount } = req.body;
-//     const wallet = await walletService.addMoney(userId, amount);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+const getMyWallet = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+    // const role = req.body.role;
+    const wallet = await walletService.getWalletByUser(userId as string);
+    res.status(200).json({ success: true, data: wallet });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
 
 //
 // 💸 Withdraw Money
@@ -134,3 +123,8 @@ export const WalletController = {
 //     res.status(400).json({ success: false, message: error.message });
 //   }
 // };
+
+export const WalletController = {
+  addMoney,
+  getMyWallet,
+};

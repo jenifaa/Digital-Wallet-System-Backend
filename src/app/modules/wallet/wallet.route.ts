@@ -4,89 +4,79 @@ import express from "express";
 
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
-import { addMoney, cashIn, cashOut, getAllWallets, getMyWallet, getSingleWallet, sendMoney, updateWalletStatus, withdraw } from "./wallet.controller";
+import { WalletController } from "./wallet.controller";
 
 const router = express.Router();
 
-
-router.post(
-  "/add-money",
-  checkAuth(Role.USER),
-
- addMoney
-);
+router.post("/add-money", checkAuth(Role.USER), WalletController.addMoney);
 
 // Withdraw Money
-router.post(
-  "/withdraw",
-  checkAuth(Role.USER),
+// router.post(
+//   "/withdraw",
+//   checkAuth(Role.USER),
 //   validateRequest(WalletValidation.withdrawSchema),
-withdraw
-);
+// withdraw
+// );
 
 // Send Money
-router.post(
-  "/send-money",
-  checkAuth(Role.USER),
+// router.post(
+//   "/send-money",
+//   checkAuth(Role.USER),
 //   validateRequest(WalletValidation.sendMoneySchema),
-  sendMoney
-);
+//   sendMoney
+// );
 
 // Get My Wallet
 router.get(
   "/me",
-  checkAuth(Role.USER, Role.AGENT),
-getMyWallet
+  checkAuth(...Object.values(Role)),
+  WalletController.getMyWallet,
 );
 
 // Get My Transactions
-router.get(
-  "/transactions",
-  checkAuth(Role.USER, Role.AGENT),
+// router.get(
+//   "/transactions",
+//   checkAuth(Role.USER, Role.AGENT),
 //  getMyTransactions
-);
-
-
+// );
 
 // Cash In (add money to user)
-router.post(
-  "/cash-in",
-  checkAuth(Role.AGENT),
+// router.post(
+//   "/cash-in",
+//   checkAuth(Role.AGENT),
 //   validateRequest(WalletValidation.cashInSchema),
-cashIn
-);
+// cashIn
+// );
 
 // Cash Out (withdraw from user)
-router.post(
-  "/cash-out",
-  checkAuth(Role.AGENT),
+// router.post(
+//   "/cash-out",
+//   checkAuth(Role.AGENT),
 //   validateRequest(WalletValidation.cashOutSchema),
-cashOut
-);
-
-
+// cashOut
+// );
 
 // Get All Wallets
-router.get(
-  "/",
-  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-getAllWallets
-);
+// router.get(
+//   "/",
+//   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+// getAllWallets
+// );
 
 // Get Single Wallet
-router.get(
-  "/:walletId",
-  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+// router.get(
+//   "/:walletId",
+//   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
 //   validateRequest(WalletValidation.getWalletSchema),
-getSingleWallet
-);
+// getSingleWallet
+// );
 
 // Block / Unblock Wallet
-router.patch(
-  "/:walletId/status",
-  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+// router.patch(
+//   "/:walletId/status",
+//   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
 //   validateRequest(WalletValidation.updateWalletStatusSchema),
- updateWalletStatus
-);
+//  updateWalletStatus
+// );
 
 export const WalletRoutes = router;
