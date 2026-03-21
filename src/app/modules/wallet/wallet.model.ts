@@ -1,32 +1,19 @@
 import { Schema, model } from "mongoose";
-import {
-  IWallet,
-  WalletStatus,
-  Currency,
-} from "./wallet.interface";
+import { IWallet, WalletStatus, Currency } from "./wallet.interface";
 import { Role } from "../user/user.interface";
 
 const walletSchema = new Schema<IWallet>(
   {
-    // Owner reference
-    owner: {
+    user: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true, 
+      unique: true,
     },
 
-    role: {
-      type: String,
-      enum: [Role.USER, Role.AGENT],
-      required: true,
-    },
-
- 
     balance: {
       type: Number,
-      required: true,
-      default: 50, 
+      default: 50,
       min: [0, "Balance cannot be negative"],
     },
 
@@ -36,14 +23,12 @@ const walletSchema = new Schema<IWallet>(
       default: Currency.BDT,
     },
 
-   
     status: {
       type: String,
       enum: Object.values(WalletStatus),
       default: WalletStatus.ACTIVE,
     },
 
-    
     limits: {
       dailyLimit: {
         type: Number,
@@ -55,11 +40,10 @@ const walletSchema = new Schema<IWallet>(
       },
     },
 
-  
     security: {
       pinHash: {
         type: String,
-        select: false, 
+        select: false,
       },
       isPinSet: {
         type: Boolean,
@@ -67,11 +51,7 @@ const walletSchema = new Schema<IWallet>(
       },
     },
 
- 
-    lastTransactionAt: {
-      type: Date,
-    },
-
+    lastTransactionAt: Date,
 
     isDeleted: {
       type: Boolean,
@@ -80,11 +60,10 @@ const walletSchema = new Schema<IWallet>(
   },
   {
     timestamps: true,
-     versionKey: false,
-  }
+    versionKey: false,
+  },
 );
 
-
-
+walletSchema.index({ user: 1 }, { unique: true });
 
 export const Wallet = model<IWallet>("Wallet", walletSchema);

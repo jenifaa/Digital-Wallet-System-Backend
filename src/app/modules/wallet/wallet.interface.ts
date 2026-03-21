@@ -23,7 +23,7 @@ export interface IWalletSecurity {
 
 export interface IWallet {
   _id?: Types.ObjectId;
-  owner: Types.ObjectId;
+  user: Types.ObjectId;
   role: Role.USER | Role.AGENT;
   balance: number;
   currency: Currency;

@@ -7,6 +7,7 @@ import { IAuthProvider, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import bcryptjs from "bcryptjs";
 import httpStatus from "http-status-codes";
+import { Wallet } from "../wallet/wallet.model";
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
   const isUserExist = await User.findOne({ email });
@@ -30,6 +31,10 @@ const createUser = async (payload: Partial<IUser>) => {
     password: hashedPassword,
     auths: [authProvider],
     ...rest,
+  });
+
+   await Wallet.create({
+    user: user._id, 
   });
 
   return user;
