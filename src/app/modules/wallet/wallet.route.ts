@@ -6,6 +6,7 @@ import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 import { WalletController } from "./wallet.controller";
 
+
 const router = express.Router();
 
 router.post("/add-money", checkAuth(Role.USER), WalletController.addMoney);
@@ -18,13 +19,13 @@ router.post("/add-money", checkAuth(Role.USER), WalletController.addMoney);
 // withdraw
 // );
 
-// Send Money
-// router.post(
-//   "/send-money",
-//   checkAuth(Role.USER),
-//   validateRequest(WalletValidation.sendMoneySchema),
-//   sendMoney
-// );
+
+router.post(
+  "/send-money",
+  checkAuth(Role.USER),
+  // validateRequest(WalletValidation.sendMoneySchema),
+  WalletController.sendMoney
+);
 
 // Get My Wallet
 router.get(

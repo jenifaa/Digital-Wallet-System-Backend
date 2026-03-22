@@ -64,56 +64,56 @@ const addMoney = async (userId: string, amount: number) => {
 //
 // 🔁 Send Money (User → User)
 //
-// const sendMoney = async (
-//   senderId: string,
-//   receiverId: string,
-//   amount: number
-// ) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
+const sendMoney = async (
+  senderId: string,
+  receiverId: string,
+  amount: number
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-//   try {
-//     const senderWallet = await Wallet.findOne({ user: senderId }).session(session);
-//     const receiverWallet = await Wallet.findOne({ user: receiverId }).session(session);
+  try {
+    const senderWallet = await Wallet.findOne({ user: senderId }).session(session);
+    const receiverWallet = await Wallet.findOne({ user: receiverId }).session(session);
 
-//     if (!senderWallet || !receiverWallet) {
-//       throw new AppError(404, "Sender or receiver wallet not found");
-//     }
+    if (!senderWallet || !receiverWallet) {
+      throw new AppError(404, "Sender or receiver wallet not found");
+    }
 
-//     if (senderWallet.status === WalletStatus.BLOCKED) {
-//       throw new AppError(400, "Sender wallet is blocked");
-//     }
+    if (senderWallet.status === WalletStatus.BLOCKED) {
+      throw new AppError(400, "Sender wallet is blocked");
+    }
 
-//     if (receiverWallet.status === WalletStatus.BLOCKED) {
-//       throw new AppError(400, "Receiver wallet is blocked");
-//     }
+    if (receiverWallet.status === WalletStatus.BLOCKED) {
+      throw new AppError(400, "Receiver wallet is blocked");
+    }
 
-//     if (senderWallet.balance < amount) {
-//       throw new AppError(400, "Insufficient balance");
-//     }
+    if (senderWallet.balance < amount) {
+      throw new AppError(400, "Insufficient balance");
+    }
 
-//     // 💸 Transfer
-//     senderWallet.balance -= amount;
-//     receiverWallet.balance += amount;
+    // 💸 Transfer
+    senderWallet.balance -= amount;
+    receiverWallet.balance += amount;
 
-//     senderWallet.lastTransactionAt = new Date();
-//     receiverWallet.lastTransactionAt = new Date();
+    senderWallet.lastTransactionAt = new Date();
+    receiverWallet.lastTransactionAt = new Date();
 
-//     await senderWallet.save({ session });
-//     await receiverWallet.save({ session });
+    await senderWallet.save({ session });
+    await receiverWallet.save({ session });
 
-//     await session.commitTransaction();
-//     session.endSession();
+    await session.commitTransaction();
+    session.endSession();
 
-//     return {
-//       message: "Money sent successfully",
-//     };
-//   } catch (error) {
-//     await session.abortTransaction();
-//     session.endSession();
-//     throw error;
-//   }
-// };
+    return {
+      message: "Money sent successfully",
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
 
 //
 // 🏦 Agent Cash-In
@@ -199,7 +199,7 @@ export const walletService = {
   getWalletByUser,
   addMoney,
   // withdraw,
-  // sendMoney,
+  sendMoney,
   // cashIn,
   // cashOut,
   // updateWalletStatus,
