@@ -41,16 +41,16 @@ const getMyWallet = async (req: Request, res: Response) => {
 //
 // 🔁 Send Money (User → User)
 //
-export const sendMoney = async (req: Request, res: Response) => {
-  try {
-    const senderId = req.user._id;
-    const { receiverId, amount } = req.body;
-    const result = await walletService.sendMoney(senderId, receiverId, amount);
-    res.status(200).json({ success: true, data: result });
-  } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
+// export const sendMoney = async (req: Request, res: Response) => {
+//   try {
+//     const senderId = req.user._id;
+//     const { receiverId, amount } = req.body;
+//     const result = await walletService.sendMoney(senderId, receiverId, amount);
+//     res.status(200).json({ success: true, data: result });
+//   } catch (error: any) {
+//     res.status(400).json({ success: false, message: error.message });
+//   }
+// };
 
 //
 // 🏦 Agent Cash-In

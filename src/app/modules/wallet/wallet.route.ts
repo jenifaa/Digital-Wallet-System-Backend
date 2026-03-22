@@ -20,12 +20,12 @@ router.post("/add-money", checkAuth(Role.USER), WalletController.addMoney);
 // );
 
 
-router.post(
-  "/send-money",
-  checkAuth(Role.USER),
+// router.post(
+//   "/send-money",
+//   checkAuth(Role.USER),
   // validateRequest(WalletValidation.sendMoneySchema),
-  WalletController.sendMoney
-);
+//   WalletController.sendMoney
+// );
 
 // Get My Wallet
 router.get(
