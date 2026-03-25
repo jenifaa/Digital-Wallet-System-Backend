@@ -1,22 +1,17 @@
+import { validateRequest } from "./../../middlewares/validateRequest";
 import express from "express";
 
-import { validateRequest } from "../../middlewares/validateRequest";
-
-import {
-  addMoneyZodSchema,
-
-} from "./transaction.validation";
+import { sendMoneyZodSchema } from "./transaction.validation";
+import { TransactionController } from "./transaction.controller";
 
 const router = express.Router();
 
+// router.post(
+//   "/add-money",
 
-router.post(
-  "/add-money",
-
-  validateRequest(addMoneyZodSchema),
-  TransactionController.addMoney
-);
-
+//   validateRequest(addMoneyZodSchema),
+//   TransactionController.sendMoney
+// );
 
 // router.post(
 //   "/withdraw",
@@ -25,14 +20,11 @@ router.post(
 //   TransactionController.withdraw
 // );
 
-
-// router.post(
-//   "/send-money",
-//   auth("user"),
-//   validateRequest(sendMoneyZodSchema),
-//   TransactionController.sendMoney
-// );
-
+router.post(
+  "/send-money",
+  validateRequest(sendMoneyZodSchema),
+  TransactionController.sendMoney,
+);
 
 // router.get(
 //   "/me",
@@ -57,7 +49,6 @@ router.post(
 //   validateRequest(cashOutZodSchema),
 //   TransactionController.cashOut
 // );
-
 
 // router.get(
 //   "/",
