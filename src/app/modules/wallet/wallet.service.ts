@@ -40,26 +40,26 @@ const addMoney = async (userId: string, amount: number) => {
 //
 // 💸 Withdraw Money (User)
 //
-// const withdraw = async (userId: string, amount: number) => {
-//   const wallet = await Wallet.findOne({ user: userId });
+const withdraw = async (userId: string, amount: number) => {
+  const wallet = await Wallet.findOne({ user: userId });
 
-//   if (!wallet) throw new AppError(404, "Wallet not found");
+  if (!wallet) throw new AppError(404, "Wallet not found");
 
-//   if (wallet.status === WalletStatus.BLOCKED) {
-//     throw new AppError(400, "Wallet is blocked");
-//   }
+  if (wallet.status === WalletStatus.BLOCKED) {
+    throw new AppError(400, "Wallet is blocked");
+  }
 
-//   if (wallet.balance < amount) {
-//     throw new AppError(400, "Insufficient balance");
-//   }
+  if (wallet.balance < amount) {
+    throw new AppError(400, "Insufficient balance");
+  }
 
-//   wallet.balance -= amount;
-//   wallet.lastTransactionAt = new Date();
+  wallet.balance -= amount;
+  wallet.lastTransactionAt = new Date();
 
-//   await wallet.save();
+  await wallet.save();
 
-//   return wallet;
-// };
+  return wallet;
+};
 
 //
 // 🔁 Send Money (User → User)
@@ -198,7 +198,7 @@ const addMoney = async (userId: string, amount: number) => {
 export const walletService = {
   getWalletByUser,
   addMoney,
-  // withdraw,
+  withdraw,
   // sendMoney,
   // cashIn,
   // cashOut,
