@@ -27,16 +27,16 @@ const getMyWallet = async (req: Request, res: Response) => {
 //
 // 💸 Withdraw Money
 //
-// export const withdraw = async (req: Request, res: Response) => {
-//   try {
-//     const userId = req.user._id;
-//     const { amount } = req.body;
-//     const wallet = await walletService.withdraw(userId, amount);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+export const withdraw = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+    const { amount } = req.body;
+    const wallet = await walletService.withdraw(userId as string, amount);
+    res.status(200).json({ success: true, data: wallet });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
 
 //
 // 🔁 Send Money (User → User)

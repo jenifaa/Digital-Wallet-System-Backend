@@ -4,7 +4,8 @@ import express from "express";
 
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
-import { WalletController } from "./wallet.controller";
+import { WalletController, withdraw } from "./wallet.controller";
+import { validateRequest } from "../../middlewares/validateRequest";
 
 
 const router = express.Router();
