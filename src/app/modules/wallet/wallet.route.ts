@@ -11,13 +11,13 @@ const router = express.Router();
 
 router.post("/add-money", checkAuth(Role.USER), WalletController.addMoney);
 
-// Withdraw Money
-// router.post(
-//   "/withdraw",
-//   checkAuth(Role.USER),
-//   validateRequest(WalletValidation.withdrawSchema),
-// withdraw
-// );
+
+router.post(
+  "/withdraw",
+  checkAuth(Role.USER),
+  validateRequest(WalletValidation.withdrawSchema),
+withdraw
+);
 
 
 // router.post(

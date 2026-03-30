@@ -6,12 +6,12 @@ import { TransactionController } from "./transaction.controller";
 
 const router = express.Router();
 
-router.post(
-  "/add-money",
+// router.post(
+//   "/add-money",
 
-  validateRequest(addMoneyZodSchema),
-  TransactionController.sendMoney
-);
+//   validateRequest(addMoneyZodSchema),
+//   TransactionController.sendMoney
+// );
 
 // router.post(
 //   "/withdraw",

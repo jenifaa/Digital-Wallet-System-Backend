@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { Transaction } from "./transaction.model";
 import { Wallet } from "../wallet/wallet.model";
 import AppError from "../../errorHelpers/AppError";
-import { User } from '../user/user.model';
+
 
 
 const sendMoney = async (
@@ -73,38 +73,8 @@ const sendMoney = async (
 };
 
 
-export const addMoneyService = async (
-  userId: string,
-  amount: number
-) => {
-  // check amount
-  if (amount <= 0) {
-    throw new Error("Amount must be greater than 0");
-  }
 
-  // find user
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
 
-  // update balance
-  user.balance = (user.balance || 0) + amount;
-  await user.save();
-
-  // create transaction record
-  const transaction = await Transaction.create({
-    user: userId,
-    type: "ADD_MONEY",
-    amount,
-    status: "SUCCESS",
-  });
-
-  return {
-    balance: user.balance,
-    transaction,
-  };
-};
 
 export const TransactionService = {
   sendMoney,
