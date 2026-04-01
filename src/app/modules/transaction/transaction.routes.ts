@@ -1,8 +1,5 @@
-import { validateRequest } from "./../../middlewares/validateRequest";
-import express from "express";
+import  express  from 'express';
 
-import { sendMoneyZodSchema } from "./transaction.validation";
-import { TransactionController } from "./transaction.controller";
 
 const router = express.Router();
 
@@ -20,11 +17,11 @@ const router = express.Router();
 //   TransactionController.withdraw
 // );
 
-router.post(
-  "/send-money",
-  validateRequest(sendMoneyZodSchema),
-  TransactionController.sendMoney,
-);
+// router.post(
+//   "/send-money",
+//   validateRequest(sendMoneyZodSchema),
+//   TransactionController.sendMoney,
+// );
 
 // router.get(
 //   "/me",

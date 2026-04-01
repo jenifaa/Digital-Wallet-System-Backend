@@ -8,7 +8,6 @@ const walletSchema = new Schema<IWallet>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
     },
 
     balance: {

@@ -13,30 +13,30 @@ import { walletService } from "./wallet.service";
   }
 };
 
-const getMyWallet = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    // const role = req.body.role;
-    const wallet = await walletService.getWalletByUser(userId as string);
-    res.status(200).json({ success: true, data: wallet });
-  } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
+// const getMyWallet = async (req: Request, res: Response) => {
+//   try {
+//     const userId = req.params.id;
+//     // const role = req.body.role;
+//     const wallet = await walletService.getWalletByUser(userId as string);
+//     res.status(200).json({ success: true, data: wallet });
+//   } catch (error: any) {
+//     res.status(400).json({ success: false, message: error.message });
+//   }
+// };
 
 //
 // 💸 Withdraw Money
 //
-export const withdraw = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    const { amount } = req.body;
-    const wallet = await walletService.withdraw(userId as string, amount);
-    res.status(200).json({ success: true, data: wallet });
-  } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
+// export const withdraw = async (req: Request, res: Response) => {
+//   try {
+//     const userId = req.params.id;
+//     const { amount } = req.body;
+//     const wallet = await walletService.withdraw(userId as string, amount);
+//     res.status(200).json({ success: true, data: wallet });
+//   } catch (error: any) {
+//     res.status(400).json({ success: false, message: error.message });
+//   }
+// };
 
 //
 // 🔁 Send Money (User → User)
@@ -126,5 +126,5 @@ export const withdraw = async (req: Request, res: Response) => {
 
 export const WalletController = {
   addMoney,
-  getMyWallet,
+  // getMyWallet,
 };

@@ -2,20 +2,20 @@
 import { Wallet } from "./wallet.model";
 import { WalletStatus } from "./wallet.interface";
 import AppError from "../../errorHelpers/AppError";
-import httpStatus from "http-status-codes";
+// import httpStatus from "http-status-codes";
 
 //
 // 👤 Get Wallet by User ID
 //
-const getWalletByUser = async (userId: string) => {
-  const wallet = await Wallet.findOne({ user: userId });
+// const getWalletByUser = async (userId: string) => {
+//   const wallet = await Wallet.findOne({ user: userId });
 
-  if (!wallet) {
-    throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
-  }
+//   if (!wallet) {
+//     throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
+//   }
 
-  return wallet;
-};
+//   return wallet;
+// };
 
 //
 // 💰 Add Money (User top-up)
@@ -37,29 +37,27 @@ const addMoney = async (userId: string, amount: number) => {
   return wallet;
 };
 
-//
-// 💸 Withdraw Money (User)
-//
-const withdraw = async (userId: string, amount: number) => {
-  const wallet = await Wallet.findOne({ user: userId });
 
-  if (!wallet) throw new AppError(404, "Wallet not found");
+// const withdraw = async (userId: string, amount: number) => {
+//   const wallet = await Wallet.findOne({ user: userId });
 
-  if (wallet.status === WalletStatus.BLOCKED) {
-    throw new AppError(400, "Wallet is blocked");
-  }
+//   if (!wallet) throw new AppError(404, "Wallet not found");
 
-  if (wallet.balance < amount) {
-    throw new AppError(400, "Insufficient balance");
-  }
+//   if (wallet.status === WalletStatus.BLOCKED) {
+//     throw new AppError(400, "Wallet is blocked");
+//   }
 
-  wallet.balance -= amount;
-  wallet.lastTransactionAt = new Date();
+//   if (wallet.balance < amount) {
+//     throw new AppError(400, "Insufficient balance");
+//   }
 
-  await wallet.save();
+//   wallet.balance -= amount;
+//   wallet.lastTransactionAt = new Date();
 
-  return wallet;
-};
+//   await wallet.save();
+
+//   return wallet;
+// };
 
 //
 // 🔁 Send Money (User → User)
@@ -196,9 +194,9 @@ const withdraw = async (userId: string, amount: number) => {
 // };
 
 export const walletService = {
-  getWalletByUser,
+  // getWalletByUser,
   addMoney,
-  withdraw,
+  // withdraw,
   // sendMoney,
   // cashIn,
   // cashOut,

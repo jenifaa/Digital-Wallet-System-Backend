@@ -15,8 +15,6 @@ const createUser = async (payload: Partial<IUser>) => {
     throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
   }
 
-
-
   const hashedPassword = await bcryptjs.hash(
     password as string,
     Number(envVars.BCRYPT_SALT_ROUND),
@@ -33,9 +31,14 @@ const createUser = async (payload: Partial<IUser>) => {
     ...rest,
   });
 
-   await Wallet.create({
-    user: user._id, 
+ if (user.role === Role.USER || user.role === Role.AGENT) {
+  const wallet = await Wallet.create({
+    user: user._id,
   });
+
+  user.wallet = wallet._id;
+  await user.save();
+}
 
   return user;
 };
@@ -100,8 +103,6 @@ const updateUser = async (
     if (decodedToken.role === Role.USER || decodedToken.role === Role.AGENT) {
       throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
     }
-
-   
   }
 
   if (payload.isActive || payload.isDeleted || payload.isVerified) {

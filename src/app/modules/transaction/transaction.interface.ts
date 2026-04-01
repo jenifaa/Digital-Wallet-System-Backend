@@ -1,51 +1,30 @@
 import { Types } from "mongoose";
 
-export type TTransactionType =
-  | "ADD_MONEY"
-  | "WITHDRAW"
-  | "SEND_MONEY"
-  | "CASH_IN"
-  | "CASH_OUT";
+export enum TransactionType {
+  ADD = "ADD",
+  WITHDRAW = "WITHDRAW",
+  SEND = "SEND",
+  CASH_IN = "CASH_IN",
+  CASH_OUT = "CASH_OUT",
+}
 
-export type TTransactionStatus =
-  | "PENDING"
-  | "COMPLETED"
-  | "FAILED"
-  | "REVERSED";
+export enum TransactionStatus {
+  PENDING = "PENDING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+  REVERSED="REVERSED"
+}
+
 
 export interface ITransaction {
   _id?: Types.ObjectId;
-
-  // Who initiated the transaction
-  initiatedBy: Types.ObjectId;
-
-  // Sender wallet/user
-  from?: Types.ObjectId;
-
-  // Receiver wallet/user
-  to?: Types.ObjectId;
-
-  // Amount transferred
+  sender?: Types.ObjectId;
+  receiver?: Types.ObjectId;
   amount: number;
-
-  // Optional fee (system)
+  type: TransactionType;
+  status: TransactionStatus;
   fee?: number;
-
-  // Optional agent commission
   commission?: number;
-
-  // Transaction type
-  type: TTransactionType;
-
-  // Status of transaction
-  status: TTransactionStatus;
-
-  // Optional reference (for tracking/logging)
-  reference?: string;
-
-  // Description (optional)
-  description?: string;
-
   createdAt?: Date;
   updatedAt?: Date;
 }

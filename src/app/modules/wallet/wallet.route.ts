@@ -4,8 +4,8 @@ import express from "express";
 
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
-import { WalletController, withdraw } from "./wallet.controller";
-import { validateRequest } from "../../middlewares/validateRequest";
+import { WalletController } from "./wallet.controller";
+
 
 
 const router = express.Router();
@@ -13,12 +13,12 @@ const router = express.Router();
 router.post("/add-money", checkAuth(Role.USER), WalletController.addMoney);
 
 
-router.post(
-  "/withdraw",
-  checkAuth(Role.USER),
-  validateRequest(WalletValidation.withdrawSchema),
-withdraw
-);
+// router.post(
+//   "/withdraw",
+//   checkAuth(Role.USER),
+//   validateRequest(WalletValidation.withdrawSchema),
+// withdraw
+// );
 
 
 // router.post(
@@ -29,11 +29,11 @@ withdraw
 // );
 
 // Get My Wallet
-router.get(
-  "/me",
-  checkAuth(...Object.values(Role)),
-  WalletController.getMyWallet,
-);
+// router.get(
+//   "/me",
+//   checkAuth(...Object.values(Role)),
+//   WalletController.getMyWallet,
+// );
 
 // Get My Transactions
 // router.get(

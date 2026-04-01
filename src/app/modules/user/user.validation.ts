@@ -25,10 +25,11 @@ export const createUserZodSchema = z.object({
       message: "Password must contain at least one special character (@$!%*?&)",
     }),
 
-  phone: z.string() .optional(),
+  phone: z.string().optional(),
   // .regex(/^(?:\+?88)?01[0-9]\d{8}$/, {
   //   message: "Invalid Bangladeshi phone number",
   // })
+  role: z.enum(Object.values(Role) as [string]).optional(),
   address: z
     .string()
     .min(5, { message: "Address must be at least 5 characters long" })

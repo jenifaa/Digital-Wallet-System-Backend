@@ -28,6 +28,7 @@ export interface IUser {
   isVerified?: boolean;
   role: Role;
   auths: IAuthProvider[];
+  wallet?: Types.ObjectId;
   transaction?: Types.ObjectId[];
   agents?: Types.ObjectId[];
   createdAt?: Date;
