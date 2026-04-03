@@ -1,66 +1,46 @@
-import z from "zod";
+import { z } from "zod";
+import { TransactionType } from "./transaction.interface";
 
-// ---------------- ENUMS ----------------
-export const TransactionTypeEnum = z.enum([
-  "ADD_MONEY",
-  "WITHDRAW",
-  "SEND_MONEY",
-  "CASH_IN",
-  "CASH_OUT",
-]);
 
-export const TransactionStatusEnum = z.enum([
-  "PENDING",
-  "COMPLETED",
-  "FAILED",
-  "REVERSED",
-]);
-
-// ---------------- COMMON ----------------
-const amountField = z
-  .number()
-  .min(1, { message: "Amount must be at least 1" });
-
-// Optional ObjectId validator (recommended)
-const objectId = z
-  .string()
-  .regex(/^[0-9a-fA-F]{24}$/, { message: "Invalid ObjectId format" });
-
-// ---------------- USER ----------------
-
-// Add Money (Top-up)
-export const addMoneyZodSchema = z.object({
-  amount: amountField,
+export const addMoneySchema = z.object({
+  amount: z.number().min(1, "Amount must be greater than 0"),
+  type: z.literal(TransactionType.ADD),
+  fee: z.number().min(0).optional(),
+  commission: z.number().min(0).optional(),
 });
 
-// Withdraw
-export const withdrawZodSchema = z.object({
-  amount: amountField,
+export const withdrawSchema = z.object({
+  amount: z.number().min(1, "Amount must be greater than 0"),
+  type: z.literal(TransactionType.WITHDRAW),
+  fee: z.number().min(0).optional(),
+  commission: z.number().min(0).optional(),
 });
 
-// Send Money
-export const sendMoneyZodSchema = z.object({
-  receiverId: objectId,
-  amount: amountField,
+export const sendMoneySchema = z.object({
+  receiver: z.string(),
+  amount: z.number().min(1, "Amount must be greater than 0"),
+  type: z.literal(TransactionType.SEND),
+  fee: z.number().min(0).optional(),
+  commission: z.number().min(0).optional(),
 });
 
-// ---------------- AGENT ----------------
-
-// Cash In (agent → user)
-export const cashInZodSchema = z.object({
-  userId: objectId,
-  amount: amountField,
+export const cashInSchema = z.object({
+  sender: z.string(),
+  receiver: z.string(),
+  amount: z.number().min(1, "Amount must be greater than 0"),
+  type: z.literal(TransactionType.CASH_IN),
+  fee: z.number().min(0).optional(),
+  commission: z.number().min(0).optional(),
 });
 
-// Cash Out (agent → user)
-export const cashOutZodSchema = z.object({
-  userId: objectId,
-  amount: amountField,
+export const cashOutSchema = z.object({
+  agent:z.string(),
+  amount: z.number().min(1, "Amount must be greater than 0"),
+  type: z.literal(TransactionType.CASH_OUT),
+  fee: z.number().min(0).optional(),
+  commission: z.number().min(0).optional(),
 });
 
-// ---------------- ADMIN (OPTIONAL) ----------------
-
-// Update Transaction Status
-export const updateTransactionStatusZodSchema = z.object({
-  status: TransactionStatusEnum,
+export const transactionIdParamSchema = z.object({
+  id: z.string(),
 });

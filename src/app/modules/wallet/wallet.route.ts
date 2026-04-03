@@ -12,7 +12,7 @@ router.get(
 );
 
 router.get(
-  "/",
+  "/all-wallet",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   WalletController.getAllWallets,
 );
