@@ -29,4 +29,16 @@ router.patch(
   WalletController.unblockWallet,
 );
 
+router.post(
+  "/set-pin",
+  checkAuth(...Object.values(Role)),
+  WalletController.setPin,
+);
+
+router.post(
+  "/verify-pin",
+  checkAuth(...Object.values(Role)),
+  WalletController.verifyPin,
+);
+
 export const WalletRoutes = router;
