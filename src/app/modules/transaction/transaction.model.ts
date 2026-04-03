@@ -7,8 +7,8 @@ import {
 
 const transactionSchema = new Schema<ITransaction>(
   {
-    sender: { type: Types.ObjectId, ref: "User", required: true },
-    receiver: { type: Types.ObjectId, ref: "User", required: true },
+    sender: { type: Types.ObjectId, ref: "User" },
+    receiver: { type: Types.ObjectId, ref: "User" },
     amount: {
       type: Number,
       required: true,
@@ -23,6 +23,17 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
       enum: Object.values(TransactionStatus),
       default: TransactionStatus.PENDING,
+    },
+    transactionId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    paymentGatewayData: {
+      type: Schema.Types.Mixed,
+    },
+    invoiceUrl: {
+      type: String,
     },
     fee: { type: Number, default: 0, min: [0, "Fee cannot be negative"] },
     commission: {
@@ -40,3 +51,5 @@ export const Transaction = model<ITransaction>(
   "Transaction",
   transactionSchema,
 );
+
+

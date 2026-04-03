@@ -31,14 +31,12 @@ const createUser = async (payload: Partial<IUser>) => {
     ...rest,
   });
 
-  if (user.role === Role.USER || user.role === Role.AGENT) {
-    const wallet = await Wallet.create({
-      user: user._id,
-    });
+  const wallet = await Wallet.create({
+    user: user._id,
+  });
 
-    user.wallet = wallet._id;
-    await user.save();
-  }
+  user.wallet = wallet._id;
+  await user.save();
 
   return user;
 };

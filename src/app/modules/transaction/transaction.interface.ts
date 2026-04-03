@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Types } from "mongoose";
 
 export enum TransactionType {
@@ -12,9 +13,8 @@ export enum TransactionStatus {
   PENDING = "PENDING",
   SUCCESS = "SUCCESS",
   FAILED = "FAILED",
-  REVERSED="REVERSED"
+  REVERSED = "REVERSED",
 }
-
 
 export interface ITransaction {
   _id?: Types.ObjectId;
@@ -23,6 +23,9 @@ export interface ITransaction {
   amount: number;
   type: TransactionType;
   status: TransactionStatus;
+  transactionId: string;
+  paymentGatewayData?: any;
+  invoiceUrl?: string;
   fee?: number;
   commission?: number;
   createdAt?: Date;

@@ -1,76 +1,68 @@
-// import  httpStatus  from 'http-status-codes';
-// import mongoose from "mongoose";
-// import { Transaction } from "./transaction.model";
-// import { Wallet } from "../wallet/wallet.model";
-// import AppError from "../../errorHelpers/AppError";
+import httpStatus from "http-status-codes";
+import AppError from "../../errorHelpers/AppError";
+import { User } from "../user/user.model";
+import { TransactionStatus, TransactionType } from "./transaction.interface";
+import { Transaction } from "./transaction.model";
+import { SSLService } from "../sslCommerz/sslCommerz.service";
 
+const getTransactionId = () => {
+  return `trans_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+};
 
+const addMoney = async (amount: number, userId: string) => {
+  const user = await User.findById(userId);
 
-// const sendMoney = async (
-//   senderId: string,
-//   receiverId: string,
-//   amount: number
-// ) => {
-//   const session = await mongoose.startSession();
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
 
-//   try {
-//     session.startTransaction();
+  if (!user.phone) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Please update your profile first",
+    );
+  }
 
-   
-//     if (senderId === receiverId) {
-//       throw new AppError(httpStatus.BAD_REQUEST, "Cannot send money to yourself");
-//     }
+  const transactionId = getTransactionId();
 
-   
-//     const senderWallet = await Wallet.findOne({ user: senderId }).session(session);
-//     const receiverWallet = await Wallet.findOne({ user: receiverId }).session(session);
+  let fee = 0;
+  if (amount <= 50) {
+    fee = 5;
+  }
 
-//     if (!senderWallet || !receiverWallet) {
-//       throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
-//     }
+  const totalPayable = amount + fee;
 
-   
-//     if (senderWallet.balance < amount) {
-//       throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
-//     }
+  const transaction = await Transaction.create({
+    sender: user._id,
+    amount,
+    fee,
+    type: TransactionType.ADD,
+    status: TransactionStatus.PENDING,
+    transactionId,
+  });
 
-//     // 💰 Update balances
-//     senderWallet.balance -= amount;
-//     receiverWallet.balance += amount;
+  const sslResponse = await SSLService.sslPaymentInit({
+    amount: totalPayable,
+    transactionId,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+  });
 
-//     await senderWallet.save({ session });
-//     await receiverWallet.save({ session });
+  if (sslResponse.status !== "SUCCESS") {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      sslResponse.failedreason || "SSL payment initialization failed",
+    );
+  }
 
-//     // 🧾 Create transaction record
-//     const transaction = await Transaction.create(
-//       [
-//         {
-//           initiatedBy: senderId,
-//           from: senderId,
-//           to: receiverId,
-//           amount,
-//           type: "SEND_MONEY",
-//           status: "COMPLETED",
-//         },
-//       ],
-//       { session }
-//     );
+  return {
+    message: "Redirect to payment gateway",
+    paymentUrl: sslResponse.GatewayPageURL,
+    transactionId,
+  };
+};
 
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     return transaction[0];
-//   } catch (error) {
-//     await session.abortTransaction();
-//     session.endSession();
-//     throw error;
-//   }
-// };
-
-
-
-
-
-// export const TransactionService = {
-//   sendMoney,
-// };
+export const transactionService = {
+  addMoney,
+};
