@@ -1,130 +1,75 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Request, Response } from "express";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { NextFunction, Request, Response } from "express";
+import httpStatus from "http-status-codes";
+import { catchAsync } from "../../utils/catchAsync";
 import { walletService } from "./wallet.service";
+import { JwtPayload } from "jsonwebtoken";
+import { sendResponse } from "../../utils/sendResponse";
 
- const addMoney = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    const { amount } = req.body;
-    const wallet = await walletService.addMoney(userId as string, amount);
-    res.status(200).json({ success: true, data: wallet });
-  } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-};
+const getMyWallet = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const decodedToken = req.user as JwtPayload;
+    const result = await walletService.getMyWallet(decodedToken.userId);
 
-// const getMyWallet = async (req: Request, res: Response) => {
-//   try {
-//     const userId = req.params.id;
-//     // const role = req.body.role;
-//     const wallet = await walletService.getWalletByUser(userId as string);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "User Retrieved Successfully",
+      data: result,
+    });
+  },
+);
 
-//
-// 💸 Withdraw Money
-//
-// export const withdraw = async (req: Request, res: Response) => {
-//   try {
-//     const userId = req.params.id;
-//     const { amount } = req.body;
-//     const wallet = await walletService.withdraw(userId as string, amount);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+const getAllWallets = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const result = await walletService.getAllWallets(
+      query as Record<string, string>,
+    );
 
-//
-// 🔁 Send Money (User → User)
-//
-// export const sendMoney = async (req: Request, res: Response) => {
-//   try {
-//     const senderId = req.user._id;
-//     const { receiverId, amount } = req.body;
-//     const result = await walletService.sendMoney(senderId, receiverId, amount);
-//     res.status(200).json({ success: true, data: result });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "All Wallets Retrieved Successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  },
+);
 
-//
-// 🏦 Agent Cash-In
-//
-// export const cashIn = async (req: Request, res: Response) => {
-//   try {
-//     const agentId = req.user._id;
-//     const { userId, amount } = req.body;
-//     const wallet = await walletService.cashIn(agentId, userId, amount);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+const blockWallet = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const walletId = req.params.id as string;
 
-//
-// 🏧 Agent Cash-Out
-//
-// export const cashOut = async (req: Request, res: Response) => {
-//   try {
-//     const agentId = req.user._id;
-//     const { userId, amount } = req.body;
-//     const wallet = await walletService.cashOut(agentId, userId, amount);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+    const result = await walletService.blockWallet(walletId);
 
-//
-// 👑 Admin: Update Wallet Status
-//
-// export const updateWalletStatus = async (req: Request, res: Response) => {
-//   try {
-//     const { walletId } = req.params;
-//     const { status } = req.body;
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "Wallet Blocked Successfully",
+      data: result,
+    });
+  },
+);
 
-//     if (!Object.values(WalletStatus).includes(status)) {
-//       throw new Error("Invalid wallet status");
-//     }
+const unblockWallet = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const walletId = req.params.id as string;
 
-//     const wallet = await walletService.updateWalletStatus(walletId, status);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+    const result = await walletService.unblockWallet(walletId);
 
-//
-// 👑 Admin: Get All Wallets
-//
-// export const getAllWallets = async (req: Request, res: Response) => {
-//   try {
-//     const wallets = await walletService.getAllWallets();
-//     res.status(200).json({ success: true, data: wallets });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
-
-//
-// 👑 Admin: Get Single Wallet
-//
-// export const getSingleWallet = async (req: Request, res: Response) => {
-//   try {
-//     const { walletId } = req.params;
-//     const wallet = await walletService.getSingleWallet(walletId);
-//     res.status(200).json({ success: true, data: wallet });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "Wallet unblocked Successfully",
+      data: result,
+    });
+  },
+);
 
 export const WalletController = {
-  addMoney,
-  // getMyWallet,
+  getMyWallet,
+  getAllWallets,
+  blockWallet,
+  unblockWallet,
 };
