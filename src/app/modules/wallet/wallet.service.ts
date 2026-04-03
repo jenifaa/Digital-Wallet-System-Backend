@@ -1,6 +1,9 @@
+import  bcryptjs  from 'bcryptjs';
+import AppError from "../../errorHelpers/AppError";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { walletSearchableFields } from "./wallet.constant";
 import { Wallet } from "./wallet.model";
+import { Types } from 'mongoose';
 
 const getMyWallet = async (userId: string) => {
   const wallet = await Wallet.findOne({ user: userId });
@@ -48,9 +51,52 @@ const unblockWallet = async (walletId: string) => {
   );
 };
 
+const setPin = async (walletId: string, pin: string) => {
+  if (!pin || pin.length < 4) {
+    throw new AppError(400, "PIN must be at least 4 digits");
+  }
+
+  const hashedPin = await bcryptjs.hash(pin, 10);
+
+  const wallet = await Wallet.findByIdAndUpdate(
+    walletId,
+    {
+      "security.pinHash": hashedPin,
+      "security.isPinSet": true,
+    },
+    { new: true },
+  );
+
+  if (!wallet) {
+    throw new AppError(404, "Wallet not found");
+  }
+
+  return { message: "PIN set successfully" };
+};
+
+const verifyPin = async (walletId: Types.ObjectId, pin: string) => {
+  const wallet = await Wallet.findById(walletId);
+
+  if (!wallet) {
+    throw new AppError(404, "Wallet not found");
+  }
+
+  if (!wallet.security?.pinHash) {
+    throw new AppError(400, "PIN not set yet");
+  }
+
+  const isValid = await bcryptjs.compare(pin, wallet.security.pinHash);
+  if (!isValid) {
+    throw new AppError(401, "Invalid PIN");
+  }
+
+  return { message: "PIN verified successfully" };
+};
 export const walletService = {
   getMyWallet,
   getAllWallets,
   blockWallet,
   unblockWallet,
+  setPin,
+  verifyPin,
 };

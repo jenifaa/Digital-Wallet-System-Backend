@@ -3,6 +3,7 @@ import express from "express";
 import { validateRequest } from "../../middlewares/validateRequest";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
+import { transactionController } from "./transaction.controller";
 
 const router = express.Router();
 
@@ -10,6 +11,7 @@ router.post(
   "/add-money",
   checkAuth(...Object.values(Role)),
   validateRequest(addMoneySchema),
+  transactionController.AddMoney
 );
 
 // router.post(
