@@ -22,6 +22,7 @@ const userSchema = new Schema<IUser>(
     picture: { type: String },
     address: { type: String },
     isDeleted: { type: Boolean, default: false },
+    isAgentApproved: { type: Boolean, default: false },
     isActive: {
       type: String,
       enum: Object.values(IsActive),

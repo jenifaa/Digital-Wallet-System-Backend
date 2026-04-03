@@ -30,4 +30,8 @@ router.patch(
   checkAuth(...Object.values(Role)),
   userControllers.updateUser,
 );
+
+router.patch("/make-agent/:id",  checkAuth(Role.ADMIN, Role.SUPER_ADMIN), userControllers.makeAgent);
+
+router.patch("/approve-agent/:id",  checkAuth(Role.ADMIN, Role.SUPER_ADMIN), userControllers.approveAgent);
 export const UserRoutes = router;

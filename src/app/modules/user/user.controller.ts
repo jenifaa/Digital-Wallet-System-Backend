@@ -7,7 +7,6 @@ import { sendResponse } from "../../utils/sendResponse";
 import { UserServices } from "./user.service";
 import { JwtPayload } from "jsonwebtoken";
 
-
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const user = await UserServices.createUser(req.body);
@@ -38,7 +37,6 @@ const getAllUsers = catchAsync(
   },
 );
 
-
 const updateUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.params.id;
@@ -49,7 +47,7 @@ const updateUser = catchAsync(
     const user = await UserServices.updateUser(
       userId as string,
       payload,
-      verifiedToken as JwtPayload
+      verifiedToken as JwtPayload,
     );
     sendResponse(res, {
       success: true,
@@ -57,9 +55,8 @@ const updateUser = catchAsync(
       message: "Users updated Successfully",
       data: user,
     });
-  }
+  },
 );
-
 
 const getMe = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -70,9 +67,9 @@ const getMe = catchAsync(
       success: true,
       statusCode: httpStatus.CREATED,
       message: "User Retrieved Successfully",
-      data: result.data
+      data: result.data,
     });
-  }
+  },
 );
 
 const getSingleUser = catchAsync(
@@ -85,12 +82,52 @@ const getSingleUser = catchAsync(
       message: "User Retrieved Successfully",
       data: result.data,
     });
-  }
+  },
+);
+
+const makeAgent = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const decodedToken = req.user;
+
+    const result = await UserServices.makeAgent(
+      userId as string,
+      decodedToken as JwtPayload,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "Role updated to agent Successfully",
+      data: result,
+    });
+  },
+);
+
+const approveAgent = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const decodedToken = req.user;
+
+    const result = await UserServices.approveAgent(
+      userId as string,
+      decodedToken as JwtPayload,
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message:"Role updated to agent verified Successfully",
+      data: result,
+    });
+  },
 );
 export const userControllers = {
   createUser,
   getAllUsers,
-   getMe,
+  getMe,
   updateUser,
   getSingleUser,
+  makeAgent,
+  approveAgent,
 };

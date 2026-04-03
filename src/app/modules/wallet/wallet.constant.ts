@@ -1,8 +1,8 @@
-export const walletFilterableFields = [
+export const walletSearchableFields = [
   "owner",
   "ownerRole",
   "status",
   "balance",
   "currency",
 ];
-export const walletSearchableFields = ["status", "ownerRole"];
+

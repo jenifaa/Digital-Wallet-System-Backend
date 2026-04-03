@@ -31,14 +31,14 @@ const createUser = async (payload: Partial<IUser>) => {
     ...rest,
   });
 
- if (user.role === Role.USER || user.role === Role.AGENT) {
-  const wallet = await Wallet.create({
-    user: user._id,
-  });
+  if (user.role === Role.USER || user.role === Role.AGENT) {
+    const wallet = await Wallet.create({
+      user: user._id,
+    });
 
-  user.wallet = wallet._id;
-  await user.save();
-}
+    user.wallet = wallet._id;
+    await user.save();
+  }
 
   return user;
 };
@@ -118,10 +118,65 @@ const updateUser = async (
   return newUpdatedUser;
 };
 
+const makeAgent = async (userId: string, decodedToken: JwtPayload) => {
+  if (
+    decodedToken.role !== Role.ADMIN &&
+    decodedToken.role !== Role.SUPER_ADMIN
+  ) {
+    throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user.role === Role.AGENT) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Already an agent");
+  }
+
+  if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Admin cannot be converted to agent",
+    );
+  }
+
+  user.role = Role.AGENT;
+  user.isAgentApproved = false;
+
+  await user.save();
+
+  return user;
+};
+
+const approveAgent = async (userId: string, decodedToken: JwtPayload) => {
+  if (
+    decodedToken.role !== Role.ADMIN &&
+    decodedToken.role !== Role.SUPER_ADMIN
+  ) {
+    throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user || user.role !== Role.AGENT) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Not an agent");
+  }
+
+  user.isAgentApproved = true;
+
+  await user.save();
+
+  return user;
+};
 export const UserServices = {
   createUser,
   getAllUsers,
   getMe,
   getSingleUser,
   updateUser,
+  makeAgent,
+  approveAgent,
 };

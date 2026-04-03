@@ -26,6 +26,7 @@ export interface IUser {
   isDeleted?: boolean;
   isActive?: IsActive;
   isVerified?: boolean;
+  isAgentApproved?: boolean;
   role: Role;
   auths: IAuthProvider[];
   wallet?: Types.ObjectId;
