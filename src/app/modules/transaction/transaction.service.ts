@@ -88,4 +88,5 @@ const addMoney = async (payload: Partial<ITransaction>, userId: string) => {
 
 export const transactionService = {
   addMoney,
+
 };

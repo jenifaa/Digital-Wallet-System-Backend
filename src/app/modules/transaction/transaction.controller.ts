@@ -5,6 +5,7 @@ import { transactionService } from "./transaction.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
+import { envVars } from "../../config/env";
 
 const AddMoney = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -24,6 +25,9 @@ const AddMoney = catchAsync(
   },
 );
 
+
+
 export const transactionController = {
   AddMoney,
+  
 };

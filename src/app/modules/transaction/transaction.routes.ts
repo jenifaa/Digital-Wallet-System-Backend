@@ -11,7 +11,7 @@ router.post(
   "/add-money",
   checkAuth(...Object.values(Role)),
   validateRequest(addMoneySchema),
-  transactionController.AddMoney
+  transactionController.AddMoney,
 );
 
 // router.post(
