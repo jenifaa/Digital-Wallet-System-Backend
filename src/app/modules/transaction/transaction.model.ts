@@ -36,11 +36,11 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
     },
     fee: { type: Number, default: 0, min: [0, "Fee cannot be negative"] },
-    commission: {
-      type: Number,
-      default: 0,
-      min: [0, "Commission cannot be negative"],
-    },
+    // commission: {
+    //   type: Number,
+    //   default: 0,
+    //   min: [0, "Commission cannot be negative"],
+    // },
   },
   {
     timestamps: true,

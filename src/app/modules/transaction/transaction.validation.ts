@@ -6,14 +6,12 @@ export const addMoneySchema = z.object({
   amount: z.number().min(1, "Amount must be greater than 0"),
   type: z.literal(TransactionType.ADD),
   fee: z.number().min(0).optional(),
-  commission: z.number().min(0).optional(),
 });
 
 export const withdrawSchema = z.object({
   amount: z.number().min(1, "Amount must be greater than 0"),
   type: z.literal(TransactionType.WITHDRAW),
   fee: z.number().min(0).optional(),
-  commission: z.number().min(0).optional(),
 });
 
 export const sendMoneySchema = z.object({

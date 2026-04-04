@@ -27,7 +27,7 @@ export interface ITransaction {
   paymentGatewayData?: any;
   invoiceUrl?: string;
   fee?: number;
-  commission?: number;
+  // commission?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -4,27 +4,26 @@ import httpStatus from "http-status-codes";
 import { transactionService } from "./transaction.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
-
-
+import { JwtPayload } from "jsonwebtoken";
 
 const AddMoney = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { amount } = req.body;
+    const decodedToken = req.user as JwtPayload;
 
-
-      const userId = req.params.id;
-
-      const result = await transactionService.addMoney(amount, userId as string);
+    const result = await transactionService.addMoney(
+      req.body,
+      decodedToken.userId,
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.CREATED,
-      message: "User Retrieved Successfully",
+      message: "Money added  Successfully",
       data: result,
     });
   },
 );
 
-export const transactionController={
-    AddMoney
-}
+export const transactionController = {
+  AddMoney,
+};
