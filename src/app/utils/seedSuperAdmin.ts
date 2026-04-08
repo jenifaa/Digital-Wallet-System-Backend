@@ -4,6 +4,7 @@ import { IAuthProvider, IUser, Role } from "../modules/user/user.interface";
 
 import bcryptjs from "bcryptjs";
 import { User } from "../modules/user/user.model";
+import { Wallet } from "../modules/wallet/wallet.model";
 export const seedSuperAdmin = async () => {
   try {
     const isSuperAdminExist = await User.findOne({
@@ -12,6 +13,11 @@ export const seedSuperAdmin = async () => {
 
     if (isSuperAdminExist) {
       console.log("Super Admin Exist");
+      if (!isSuperAdminExist.wallet) {
+        const wallet = await Wallet.create({ user: isSuperAdminExist._id });
+        isSuperAdminExist.wallet = wallet._id;
+        await isSuperAdminExist.save();
+      }
       return;
     }
 
@@ -33,6 +39,9 @@ export const seedSuperAdmin = async () => {
       auths: [authProvider],
     };
     const superAdmin = await User.create(payload);
+    const wallet = await Wallet.create({ user: superAdmin._id });
+    superAdmin.wallet = wallet._id;
+    await superAdmin.save();
     console.log(superAdmin);
   } catch (error) {
     console.log(error);

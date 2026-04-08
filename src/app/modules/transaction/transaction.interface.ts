@@ -16,6 +16,11 @@ export enum TransactionStatus {
   REVERSED = "REVERSED",
 }
 
+export enum TransactionEntry {
+  DEBIT = "DEBIT",
+  CREDIT = "CREDIT",
+}
+
 export interface ITransaction {
   _id?: Types.ObjectId;
   sender?: Types.ObjectId;
@@ -24,10 +29,13 @@ export interface ITransaction {
   type: TransactionType;
   status: TransactionStatus;
   transactionId: string;
+  referenceId?: string;
+  entry?: TransactionEntry;
   paymentGatewayData?: any;
   invoiceUrl?: string;
   fee?: number;
-  // commission?: number;
+  processedAt?: Date;
+  commission?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

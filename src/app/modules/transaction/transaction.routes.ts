@@ -1,4 +1,9 @@
-import { addMoneySchema } from "./transaction.validation";
+import {
+  addMoneySchema,
+  cashInSchema,
+  cashOutSchema,
+  sendMoneySchema,
+} from "./transaction.validation";
 import express from "express";
 import { validateRequest } from "../../middlewares/validateRequest";
 import { checkAuth } from "../../middlewares/checkAuth";
@@ -6,6 +11,14 @@ import { Role } from "../user/user.interface";
 import { transactionController } from "./transaction.controller";
 
 const router = express.Router();
+
+// SSLCommerz callback compatibility (some envs point to /api/transaction/*)
+router.get("/success", transactionController.successCallback);
+router.post("/success", transactionController.successCallback);
+router.get("/fail", transactionController.failCallback);
+router.post("/fail", transactionController.failCallback);
+router.get("/cancel", transactionController.cancelCallback);
+router.post("/cancel", transactionController.cancelCallback);
 
 router.post(
   "/add-money",
@@ -21,11 +34,12 @@ router.post(
 //   TransactionController.withdraw
 // );
 
-// router.post(
-//   "/send-money",
-//   validateRequest(sendMoneyZodSchema),
-//   TransactionController.sendMoney,
-// );
+router.post(
+  "/send-money",
+  checkAuth(Role.USER, Role.AGENT),
+  validateRequest(sendMoneySchema),
+  transactionController.SendMoney,
+);
 
 // router.get(
 //   "/me",
@@ -36,20 +50,20 @@ router.post(
 // ---------------- AGENT ROUTES ----------------
 
 // Cash In (Agent → User)
-// router.post(
-//   "/cash-in",
-//   auth("agent"),
-//   validateRequest(cashInZodSchema),
-//   TransactionController.cashIn
-// );
+router.post(
+  "/cash-in",
+  checkAuth(Role.AGENT),
+  validateRequest(cashInSchema),
+  transactionController.CashIn,
+);
 
 // Cash Out (Agent → User)
-// router.post(
-//   "/cash-out",
-//   auth("agent"),
-//   validateRequest(cashOutZodSchema),
-//   TransactionController.cashOut
-// );
+router.post(
+  "/cash-out",
+  checkAuth(Role.USER, Role.AGENT),
+  validateRequest(cashOutSchema),
+  transactionController.CashOut,
+);
 
 // router.get(
 //   "/",

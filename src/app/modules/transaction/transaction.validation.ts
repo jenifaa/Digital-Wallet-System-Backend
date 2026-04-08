@@ -23,7 +23,6 @@ export const sendMoneySchema = z.object({
 });
 
 export const cashInSchema = z.object({
-  sender: z.string(),
   receiver: z.string(),
   amount: z.number().min(1, "Amount must be greater than 0"),
   type: z.literal(TransactionType.CASH_IN),

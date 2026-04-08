@@ -1,6 +1,7 @@
 import { Schema, model, Types } from "mongoose";
 import {
   ITransaction,
+  TransactionEntry,
   TransactionType,
   TransactionStatus,
 } from "./transaction.interface";
@@ -29,6 +30,14 @@ const transactionSchema = new Schema<ITransaction>(
       required: true,
       unique: true,
     },
+    referenceId: {
+      type: String,
+      index: true,
+    },
+    entry: {
+      type: String,
+      enum: Object.values(TransactionEntry),
+    },
     paymentGatewayData: {
       type: Schema.Types.Mixed,
     },
@@ -36,11 +45,12 @@ const transactionSchema = new Schema<ITransaction>(
       type: String,
     },
     fee: { type: Number, default: 0, min: [0, "Fee cannot be negative"] },
-    // commission: {
-    //   type: Number,
-    //   default: 0,
-    //   min: [0, "Commission cannot be negative"],
-    // },
+    processedAt: { type: Date },
+    commission: {
+      type: Number,
+      default: 0,
+      min: [0, "Commission cannot be negative"],
+    },
   },
   {
     timestamps: true,
