@@ -21,6 +21,7 @@ export enum TransactionEntry {
   CREDIT = "CREDIT",
 }
 
+export const AGENT_COMMISSION_PERCENT = 2;
 export interface ITransaction {
   _id?: Types.ObjectId;
   sender?: Types.ObjectId;

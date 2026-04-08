@@ -5,19 +5,7 @@ import { PaymentService } from "./payment.service";
 import { envVars } from "../../config/env";
 import { sendResponse } from "../../utils/sendResponse";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
-// import { sendResponse } from "../../utils/sendResponse";
-// import { SSLService } from "../sslCommerz/sslCommerz.service";
 
-// const initPayment = catchAsync(async (req: Request, res: Response) => {
-//   const bookingId = req.params.bookingId;
-//   const result = await PaymentService.initPayment(bookingId);
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "Payment done successfully",
-//     data: result,
-//   });
-// });
 
 const successPayment = catchAsync(async (req: Request, res: Response) => {
   const query = req.query;

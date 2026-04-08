@@ -41,13 +41,7 @@ router.post(
   transactionController.SendMoney,
 );
 
-// router.get(
-//   "/me",
-//   auth("user", "agent"),
-//   TransactionController.getMyTransactions
-// );
 
-// ---------------- AGENT ROUTES ----------------
 
 // Cash In (Agent → User)
 router.post(
