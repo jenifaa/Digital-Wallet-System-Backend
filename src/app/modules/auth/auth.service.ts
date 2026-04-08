@@ -3,11 +3,15 @@
 import  bcryptjs  from 'bcryptjs';
 import  httpStatus  from 'http-status-codes';
 import AppError from "../../errorHelpers/AppError";
-import { IAuthProvider, IUser } from "../user/user.interface";
+import { IAuthProvider, IsActive, IUser } from "../user/user.interface";
 import { User } from "../user/user.model";
 import { createNewAccessTokenWithRefreshToken, createUserToken } from '../../utils/userTokens';
 import { JwtPayload } from 'jsonwebtoken';
 import { envVars } from '../../config/env';
+import jwt from "jsonwebtoken"
+import { sendEmail } from '../../utils/sendEmail';
+
+
 
 const credentialsLogin = async (payload: Partial<IUser>) => {
   const { email, password } = payload;
@@ -132,10 +136,55 @@ const setPassword = async (userId: string, plainPassword: string) => {
   // return true;
 };
 
+const forgetPassword = async (email: string) => {
+  const isUserExist = await User.findOne({ email });
+
+  if (!isUserExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User does not Exist");
+  }
+  if (!isUserExist.isVerified) {
+    throw new AppError(httpStatus.BAD_GATEWAY, "User is not verified");
+  }
+  if (
+    isUserExist.isActive === IsActive.BLOCKED ||
+    isUserExist.isActive === IsActive.INACTIVE
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `User is ${isUserExist.isActive}`
+    );
+  }
+  if (isUserExist.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
+  }
+
+  const jwtPayload = {
+    userId: isUserExist._id,
+    email: isUserExist.email,
+    role: isUserExist.role,
+  };
+  const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, {
+    expiresIn: "10m",
+  });
+
+  const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`;
+
+  sendEmail({
+    to: isUserExist.email,
+    subject: " Password Reset",
+    templateName: "forgetPassword",
+    templateData: {
+      name: isUserExist.name,
+      resetUILink,
+    },
+  });
+};
+
 export const AuthServices = {
   credentialsLogin,
   changePassword,
   getNewAccessToken,
   resetPassword,
-  setPassword
+  setPassword,
+  forgetPassword
 };

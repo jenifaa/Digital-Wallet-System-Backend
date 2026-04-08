@@ -1,0 +1,12 @@
+<h1>Invoice For Booking</h1>
+
+<p>Payment ID: <%= transactionId %></p>
+<p>Amount paid: $<%= totalAmount.toFixed(2) %></p>
+<p>Tour: <%= tourTitle %></p>
+<p>Booking Date: <%= bookingDate ? new Date(bookingDate).toDateString() : "N/A" %></p>
+
+<p>Guest Name: <%= userName %> (Guests: <%= guestCount %>)</p>
+
+<p>Thank you For Your Booking!</p>
+
+<p><a>Download Invoice PDF</a></p>
