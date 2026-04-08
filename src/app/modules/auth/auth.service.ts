@@ -3,7 +3,7 @@
 import  bcryptjs  from 'bcryptjs';
 import  httpStatus  from 'http-status-codes';
 import AppError from "../../errorHelpers/AppError";
-import { IUser } from "../user/user.interface";
+import { IAuthProvider, IUser } from "../user/user.interface";
 import { User } from "../user/user.model";
 import { createNewAccessTokenWithRefreshToken, createUserToken } from '../../utils/userTokens';
 import { JwtPayload } from 'jsonwebtoken';
@@ -18,7 +18,7 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
     throw new AppError(httpStatus.BAD_REQUEST, "Email does not Exist");
   }
 
-  const isPasswordMatched = bcryptjs.compare(
+  const isPasswordMatched = await bcryptjs.compare(
     password as string,
     isUserExist.password as string,
   );
@@ -97,10 +97,45 @@ const resetPassword = async (
   await isUserExist.save();
 
 };
+const setPassword = async (userId: string, plainPassword: string) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(404, "User Not found");
+  }
+
+  if (
+    user.password &&
+    user.auths.some((providerObject) => providerObject.provider === "google")
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "You have already set your password.Now you can change the password from your profile"
+    );
+  }
+
+  const hashedPassword = await bcryptjs.hash(
+    plainPassword,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
+
+  const credentialProvider: IAuthProvider = {
+    provider: "credentials",
+    providerId: user.email,
+  };
+
+  const auths: IAuthProvider[] = [...user.auths, credentialProvider];
+  user.password = hashedPassword;
+  user.auths = auths;
+  await user.save();
+
+  // return true;
+};
 
 export const AuthServices = {
   credentialsLogin,
   changePassword,
   getNewAccessToken,
-  resetPassword
+  resetPassword,
+  setPassword
 };

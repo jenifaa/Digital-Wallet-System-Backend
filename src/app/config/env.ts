@@ -30,6 +30,7 @@ interface EnvConfig {
     SSL_VALIDATION_API: string;
     SSL_IPN_URL: string;
   };
+
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -59,6 +60,7 @@ const loadEnvVariables = (): EnvConfig => {
     "SSL_SUCCESS_BACKEND_URL",
     "SSL_FAIL_BACKEND_URL",
     "SSL_CANCEL_BACKEND_URL",
+   
   ];
   requiredEnvVariables.forEach((key) => {
     if (!process.env[key]) {
@@ -95,6 +97,7 @@ const loadEnvVariables = (): EnvConfig => {
       SSL_CANCEL_BACKEND_URL: process.env.SSL_CANCEL_BACKEND_URL as string,
       SSL_IPN_URL: process.env.SSL_IPN_URL as string,
     },
+   
   };
 };
 

@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TGenericErrorResponse } from "../interfaces/error.types";
 
-export const handleDuplicateError = (err: any): TGenericErrorResponse => {
-  const duplicate = err.message.match(/"([^"]*)"/);
+
+export const handleDuplicateError = (err: any) => {
+  const field = Object.keys(err.keyValue || {})[0];
+  const value = err.keyValue?.[field];
+
   return {
     statusCode: 400,
-    message: `${duplicate[1]} already exist `,
+    message: `Duplicate ${field}: ${value}`,
   };
 };

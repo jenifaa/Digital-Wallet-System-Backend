@@ -24,9 +24,6 @@ passport.use(
         if (!isUserExist) {
           return done(null, false, { message: "User does not exist" });
         }
-        // if (!isUserExist.isVerified) {
-        //   return done(null, false, { message: "User is not verified" });
-        // }
 
         if (
           isUserExist.isActive === IsActive.BLOCKED ||
@@ -36,6 +33,9 @@ passport.use(
         }
         if (isUserExist.isDeleted) {
           return done(null, false, { message: "User is deleted" });
+        }
+        if (!isUserExist.isVerified) {
+          return done(null, false, { message: "User is not verified" });
         }
 
         const isGoogleAuthenticated = isUserExist.auths.some(
@@ -84,9 +84,25 @@ passport.use(
           return done(null, false, { message: "No email found" });
         }
 
-        let user = await User.findOne({ email });
-        if (!user) {
-          user = await User.create({
+        let isUserExist = await User.findOne({ email });
+
+        if (isUserExist && !isUserExist.isVerified) {
+          return done(null, false, { message: "User is not verified" });
+        }
+
+        if (
+          isUserExist &&
+          (isUserExist.isActive === IsActive.BLOCKED ||
+            isUserExist.isActive === IsActive.INACTIVE)
+        ) {
+          return done(`User is ${isUserExist.isActive}`);
+        }
+        if (isUserExist && isUserExist.isDeleted) {
+          return done(null, false, { message: "User is deleted" });
+        }
+
+        if(!isUserExist){
+            isUserExist = await User.create({
             email,
             name: profile.displayName,
             picture: profile.photos?.[0].value,
@@ -101,7 +117,24 @@ passport.use(
           });
         }
 
-        return done(null, user);
+        // let user = await User.findOne({ email });
+        // if (!user) {
+        //   user = await User.create({
+        //     email,
+        //     name: profile.displayName,
+        //     picture: profile.photos?.[0].value,
+        //     role: Role.USER,
+        //     isVerified: true,
+        //     auths: [
+        //       {
+        //         provider: "google",
+        //         providerId: profile.id,
+        //       },
+        //     ],
+        //   });
+        // }
+
+        return done(null, isUserExist);
       } catch (error) {
         console.log("Google strategy error", error);
         return done(error);
