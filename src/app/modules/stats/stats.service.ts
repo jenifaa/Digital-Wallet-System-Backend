@@ -105,6 +105,7 @@ const getTransactionStats = async () => {
   const [
     totalTransactions,
     totalTransactionByStatus,
+    transactionsByType,       
     transactionsLast7Days,
     transactionsLast30Days,
     totalUniqueUsers,
@@ -121,6 +122,16 @@ const getTransactionStats = async () => {
       },
     ]),
 
+  
+    Transaction.aggregate([
+      {
+        $group: {
+          _id: "$type",
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+
     Transaction.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
     Transaction.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
 
@@ -132,6 +143,7 @@ const getTransactionStats = async () => {
   return {
     totalTransactions,
     totalTransactionByStatus,
+    transactionsByType,       
     transactionsLast7Days,
     transactionsLast30Days,
     totalUniqueUsers,
