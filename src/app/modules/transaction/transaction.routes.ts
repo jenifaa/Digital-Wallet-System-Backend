@@ -3,6 +3,7 @@ import {
   cashInSchema,
   cashOutSchema,
   sendMoneySchema,
+  withdrawSchema,
 } from "./transaction.validation";
 import express from "express";
 import { validateRequest } from "../../middlewares/validateRequest";
@@ -29,12 +30,13 @@ router.post(
   transactionController.AddMoney,
 );
 
-// router.post(
-//   "/withdraw",
-//   auth("user"),
-//   validateRequest(withdrawZodSchema),
-//   TransactionController.withdraw
-// );
+router.post(
+  "/withdraw",
+  checkAuth(Role.USER, Role.AGENT),
+  requireWalletPin,
+  validateRequest(withdrawSchema),
+  transactionController.Withdraw,
+);
 
 router.post(
   "/send-money",
@@ -64,18 +66,6 @@ router.post(
   transactionController.CashOut,
 );
 
-// router.get(
-//   "/",
-//   auth("admin"),
-//   TransactionController.getAllTransactions
-// );
 
-// Update Transaction Status
-// router.patch(
-//   "/:id/status",
-//   auth("admin"),
-//   validateRequest(updateTransactionStatusZodSchema),
-//   TransactionController.updateTransactionStatus
-// );
 
 export const TransactionRoutes = router;

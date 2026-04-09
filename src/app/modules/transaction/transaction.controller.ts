@@ -69,6 +69,20 @@ const CashOut = catchAsync(
   },
 );
 
+const Withdraw = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const decodedToken = req.user as JwtPayload;
+    const result = await transactionService.withdraw(req.body, decodedToken.userId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "Withdraw successful",
+      data: result,
+    });
+  },
+);
+
 // SSLCommerz redirects can be configured to hit /api/transaction/*
 const successCallback = catchAsync(async (req: Request, res: Response) => {
   const query = req.query as Record<string, string>;
@@ -98,6 +112,7 @@ const cancelCallback = catchAsync(async (req: Request, res: Response) => {
 
 export const transactionController = {
   AddMoney,
+  Withdraw,
   SendMoney,
   CashIn,
   CashOut,

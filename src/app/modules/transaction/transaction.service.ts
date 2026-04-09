@@ -458,8 +458,73 @@ const cashOut = async (payload: { agent?: string; amount?: number }, userId: str
   }
 };
 
+const withdraw = async (payload: Partial<ITransaction>, userId: string) => {
+  const session = await Transaction.startSession();
+  session.startTransaction();
+
+  try {
+    const user = await User.findById(userId).select("_id");
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    const amount = Number(payload.amount || 0);
+    if (!amount || amount < 1) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Invalid amount");
+    }
+
+    const fee = calculateFee(amount);
+    const totalDebit = amount + fee;
+
+    const debitRes = await Wallet.updateOne(
+      { user: user._id, balance: { $gte: totalDebit } },
+      { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } },
+      { session },
+    );
+    if (debitRes.matchedCount === 0) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
+    }
+
+    if (fee > 0) {
+      const adminWalletId = await getSystemAdminWalletId(session);
+      await Wallet.updateOne(
+        { _id: adminWalletId },
+        { $inc: { balance: fee }, $set: { lastTransactionAt: new Date() } },
+        { session },
+      );
+    }
+
+    const referenceId = getTransactionId();
+    await Transaction.create(
+      [
+        {
+          sender: user._id,
+          amount,
+          fee,
+          type: TransactionType.WITHDRAW,
+          entry: TransactionEntry.DEBIT,
+          referenceId,
+          status: TransactionStatus.SUCCESS,
+          transactionId: `${referenceId}_D`,
+          processedAt: new Date(),
+        },
+      ],
+      { session, ordered: true },
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+    return { success: true, message: "Withdraw successful", referenceId };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
 export const transactionService = {
   addMoney,
+  withdraw,
   sendMoney,
   cashIn,
   cashOut,
