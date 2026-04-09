@@ -5,8 +5,6 @@ import { catchAsync } from "../../utils/catchAsync";
 import { walletService } from "./wallet.service";
 import { JwtPayload } from "jsonwebtoken";
 import { sendResponse } from "../../utils/sendResponse";
-import { Wallet } from "./wallet.model";
-import AppError from "../../errorHelpers/AppError";
 
 const getMyWallet = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -72,18 +70,8 @@ const unblockWallet = catchAsync(
 const setPin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const decodedToken = req.user as JwtPayload;
-    const userId = decodedToken.userId;
-
-    const walletId = req.params.id as string;
-    const wallet = await Wallet.findOne({ user: userId });
-    if (!wallet) {
-      throw new Error("Wallet not found");
-    }
-
     const { pin } = req.body;
-
-    // ✅ Use correct service
-    const result = await walletService.setPin(walletId, pin);
+    const result = await walletService.setPinForUser(decodedToken.userId, pin);
 
     sendResponse(res, {
       success: true,
@@ -94,28 +82,26 @@ const setPin = catchAsync(
   },
 );
 
-const verifyPin = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const decodedToken = req.user as JwtPayload;
-    const userId = decodedToken.userId;
+const forgetPin = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body || {};
+  const result = await walletService.forgetPin(email);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Email sent successfully",
+    data: result,
+  });
+});
 
-    const wallet = await Wallet.findOne({ user: userId });
-    if (!wallet) {
-      throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
-    }
-
-    const { pin } = req.body;
-
-    const result = await walletService.verifyPin(wallet._id, pin);
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "PIN verified successfully",
-      data: result,
-    });
-  },
-);
+const resetPin = catchAsync(async (req: Request, res: Response) => {
+  const result = await walletService.resetPin(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "PIN reset successfully",
+    data: result,
+  });
+});
 
 export const WalletController = {
   getMyWallet,
@@ -123,5 +109,6 @@ export const WalletController = {
   blockWallet,
   unblockWallet,
   setPin,
-  verifyPin
+  forgetPin,
+  resetPin,
 };

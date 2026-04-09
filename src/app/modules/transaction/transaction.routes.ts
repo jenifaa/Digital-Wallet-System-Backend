@@ -9,6 +9,7 @@ import { validateRequest } from "../../middlewares/validateRequest";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 import { transactionController } from "./transaction.controller";
+import { requireWalletPin } from "../../middlewares/requireWalletPin";
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.post("/cancel", transactionController.cancelCallback);
 router.post(
   "/add-money",
   checkAuth(...Object.values(Role)),
+  requireWalletPin,
   validateRequest(addMoneySchema),
   transactionController.AddMoney,
 );
@@ -37,6 +39,7 @@ router.post(
 router.post(
   "/send-money",
   checkAuth(Role.USER, Role.AGENT),
+  requireWalletPin,
   validateRequest(sendMoneySchema),
   transactionController.SendMoney,
 );
@@ -47,6 +50,7 @@ router.post(
 router.post(
   "/cash-in",
   checkAuth(Role.AGENT),
+  requireWalletPin,
   validateRequest(cashInSchema),
   transactionController.CashIn,
 );
@@ -55,6 +59,7 @@ router.post(
 router.post(
   "/cash-out",
   checkAuth(Role.USER, Role.AGENT),
+  requireWalletPin,
   validateRequest(cashOutSchema),
   transactionController.CashOut,
 );

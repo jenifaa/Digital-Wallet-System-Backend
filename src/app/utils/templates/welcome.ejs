@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #111;">
+    <div style="max-width: 640px; margin: 0 auto; padding: 24px;">
+      <h2 style="margin: 0 0 12px;">Welcome, <%= name || "there" %>!</h2>
+      <p style="margin: 0 0 12px;">
+        Your Digital Wallet account (<strong><%= email %></strong>) has been created successfully.
+      </p>
+      <p style="margin: 0;">
+        For your security, please set a wallet PIN before making your first transaction.
+      </p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="margin: 0; font-size: 12px; color: #666;">
+        If you did not create this account, please contact support.
+      </p>
+    </div>
+  </body>
+</html>
+

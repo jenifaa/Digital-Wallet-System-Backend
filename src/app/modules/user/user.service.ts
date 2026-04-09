@@ -8,6 +8,7 @@ import { User } from "./user.model";
 import bcryptjs from "bcryptjs";
 import httpStatus from "http-status-codes";
 import { Wallet } from "../wallet/wallet.model";
+import { sendEmail } from "../../utils/sendEmail";
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
   const isUserExist = await User.findOne({ email });
@@ -37,6 +38,18 @@ const createUser = async (payload: Partial<IUser>) => {
 
   user.wallet = wallet._id;
   await user.save();
+
+  if (user.email) {
+    await sendEmail({
+      to: user.email,
+      subject: "Welcome to Digital Wallet",
+      templateName: "welcome",
+      templateData: {
+        name: user.name,
+        email: user.email,
+      },
+    });
+  }
 
   return user;
 };

@@ -108,7 +108,7 @@ const getTransactionStats = async () => {
     transactionsByType,       
     transactionsLast7Days,
     transactionsLast30Days,
-    totalUniqueUsers,
+    totalUniqueUsersAgg,
     highestTransactions,
   ] = await Promise.all([
     Transaction.countDocuments(),
@@ -135,7 +135,17 @@ const getTransactionStats = async () => {
     Transaction.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
     Transaction.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
 
-    Transaction.distinct("user").then((users) => users.length),
+    Transaction.aggregate([
+      {
+        $project: {
+          users: ["$sender", "$receiver"],
+        },
+      },
+      { $unwind: "$users" },
+      { $match: { users: { $ne: null } } },
+      { $group: { _id: "$users" } },
+      { $count: "count" },
+    ]),
 
     Transaction.find().sort({ amount: -1 }).limit(5),
   ]);
@@ -146,7 +156,7 @@ const getTransactionStats = async () => {
     transactionsByType,       
     transactionsLast7Days,
     transactionsLast30Days,
-    totalUniqueUsers,
+    totalUniqueUsers: totalUniqueUsersAgg[0]?.count || 0,
     highestTransactions,
   };
 };

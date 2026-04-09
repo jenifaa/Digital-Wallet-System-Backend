@@ -4,6 +4,11 @@ import { QueryBuilder } from "../../utils/QueryBuilder";
 import { walletSearchableFields } from "./wallet.constant";
 import { Wallet } from "./wallet.model";
 import { Types } from 'mongoose';
+import httpStatus from "http-status-codes";
+import { User } from "../user/user.model";
+import jwt from "jsonwebtoken";
+import { envVars } from "../../config/env";
+import { sendEmail } from "../../utils/sendEmail";
 
 const getMyWallet = async (userId: string) => {
   const wallet = await Wallet.findOne({ user: userId });
@@ -51,52 +56,115 @@ const unblockWallet = async (walletId: string) => {
   );
 };
 
-const setPin = async (walletId: string, pin: string) => {
-  if (!pin || pin.length < 4) {
-    throw new AppError(400, "PIN must be at least 4 digits");
+const normalizePin = (pin: string) => String(pin ?? "").trim();
+
+const setPinForUser = async (userId: string, pin: string) => {
+  const normalized = normalizePin(pin);
+  if (!/^\d{4,}$/.test(normalized)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "PIN must be at least 4 digits");
   }
 
-  const hashedPin = await bcryptjs.hash(pin, 10);
-
-  const wallet = await Wallet.findByIdAndUpdate(
-    walletId,
-    {
-      "security.pinHash": hashedPin,
-      "security.isPinSet": true,
-    },
-    { new: true },
+  const wallet = await Wallet.findOne({ user: userId }).select(
+    "+security.pinHash security.isPinSet",
   );
-
   if (!wallet) {
-    throw new AppError(404, "Wallet not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
   }
+
+  if (wallet.security?.isPinSet) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "PIN already set. Use forgot/reset PIN to change it.",
+    );
+  }
+
+  const hashedPin = await bcryptjs.hash(normalized, 10);
+  wallet.security = {
+    ...(wallet.security || {}),
+    pinHash: hashedPin,
+    isPinSet: true,
+  };
+  await wallet.save();
 
   return { message: "PIN set successfully" };
 };
 
-const verifyPin = async (walletId: Types.ObjectId, pin: string) => {
-  const wallet = await Wallet.findById(walletId);
+const forgetPin = async (email: string) => {
+  const user = await User.findOne({ email }).select("_id name email isVerified");
+  if (!user) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist");
+  }
+  if (!user.isVerified) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
+  }
 
+  const jwtPayload = {
+    userId: user._id,
+    email: user.email,
+    purpose: "PIN_RESET",
+  };
+  const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, {
+    expiresIn: "10m",
+  });
+
+  const resetUILink = `${envVars.FRONTEND_URL}/reset-pin?id=${user._id}&token=${resetToken}`;
+
+  await sendEmail({
+    to: user.email,
+    subject: "Wallet PIN reset",
+    templateName: "forgetPin",
+    templateData: {
+      name: user.name,
+      resetUILink,
+    },
+  });
+
+  return { message: "Email sent successfully" };
+};
+
+const resetPin = async (payload: { id: string; token: string; newPin: string }) => {
+  const { id, token, newPin } = payload;
+  if (!id || !token) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid reset request");
+  }
+
+  let decoded: any;
+  try {
+    decoded = jwt.verify(token, envVars.JWT_ACCESS_SECRET);
+  } catch {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid or expired token");
+  }
+
+  if (String(decoded.userId) !== String(id) || decoded.purpose !== "PIN_RESET") {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid or expired token");
+  }
+
+  const normalized = normalizePin(newPin);
+  if (!/^\d{4,}$/.test(normalized)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "PIN must be at least 4 digits");
+  }
+
+  const wallet = await Wallet.findOne({ user: id }).select("+security.pinHash security.isPinSet");
   if (!wallet) {
-    throw new AppError(404, "Wallet not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
   }
 
-  if (!wallet.security?.pinHash) {
-    throw new AppError(400, "PIN not set yet");
-  }
+  const hashedPin = await bcryptjs.hash(normalized, 10);
+  wallet.security = {
+    ...(wallet.security || {}),
+    pinHash: hashedPin,
+    isPinSet: true,
+  };
+  await wallet.save();
 
-  const isValid = await bcryptjs.compare(pin, wallet.security.pinHash);
-  if (!isValid) {
-    throw new AppError(401, "Invalid PIN");
-  }
-
-  return { message: "PIN verified successfully" };
+  return { message: "PIN reset successfully" };
 };
 export const walletService = {
   getMyWallet,
   getAllWallets,
   blockWallet,
   unblockWallet,
-  setPin,
-  verifyPin,
+  setPinForUser,
+  forgetPin,
+  resetPin,
 };

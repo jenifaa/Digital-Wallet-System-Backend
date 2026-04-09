@@ -30,15 +30,12 @@ router.patch(
 );
 
 router.post(
-  "/set-pin",
+  "/pin/set",
   checkAuth(...Object.values(Role)),
   WalletController.setPin,
 );
 
-router.post(
-  "/verify-pin",
-  checkAuth(...Object.values(Role)),
-  WalletController.verifyPin,
-);
+router.post("/pin/forgot", WalletController.forgetPin);
+router.post("/pin/reset", WalletController.resetPin);
 
 export const WalletRoutes = router;

@@ -8,7 +8,7 @@ const getUserStats = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Booking stats fetched successfully",
+    message: "User stats fetched successfully",
     data: stats,
   });
 });
@@ -17,7 +17,7 @@ const getWalletStats = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Booking stats fetched successfully",
+    message: "Wallet stats fetched successfully",
     data: stats,
   });
 });
@@ -26,7 +26,7 @@ const getTransactionStats = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Booking stats fetched successfully",
+    message: "Transaction stats fetched successfully",
     data: stats,
   });
 });
@@ -35,7 +35,7 @@ const getPaymentStats = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Booking stats fetched successfully",
+    message: "Payment stats fetched successfully",
     data: stats,
   });
 });
