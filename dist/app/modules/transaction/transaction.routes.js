@@ -20,27 +20,10 @@ router.post("/fail", transaction_controller_1.transactionController.failCallback
 router.get("/cancel", transaction_controller_1.transactionController.cancelCallback);
 router.post("/cancel", transaction_controller_1.transactionController.cancelCallback);
 router.post("/add-money", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.addMoneySchema), transaction_controller_1.transactionController.AddMoney);
-// router.post(
-//   "/withdraw",
-//   auth("user"),
-//   validateRequest(withdrawZodSchema),
-//   TransactionController.withdraw
-// );
+router.post("/withdraw", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.withdrawSchema), transaction_controller_1.transactionController.Withdraw);
 router.post("/send-money", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.sendMoneySchema), transaction_controller_1.transactionController.SendMoney);
 // Cash In (Agent → User)
 router.post("/cash-in", (0, checkAuth_1.checkAuth)(user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.cashInSchema), transaction_controller_1.transactionController.CashIn);
 // Cash Out (Agent → User)
 router.post("/cash-out", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.cashOutSchema), transaction_controller_1.transactionController.CashOut);
-// router.get(
-//   "/",
-//   auth("admin"),
-//   TransactionController.getAllTransactions
-// );
-// Update Transaction Status
-// router.patch(
-//   "/:id/status",
-//   auth("admin"),
-//   validateRequest(updateTransactionStatusZodSchema),
-//   TransactionController.updateTransactionStatus
-// );
 exports.TransactionRoutes = router;

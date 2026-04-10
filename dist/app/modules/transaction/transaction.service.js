@@ -376,8 +376,55 @@ const cashOut = (payload, userId) => __awaiter(void 0, void 0, void 0, function*
         throw error;
     }
 });
+const withdraw = (payload, userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const session = yield transaction_model_1.Transaction.startSession();
+    session.startTransaction();
+    try {
+        const user = yield user_model_1.User.findById(userId).select("_id");
+        if (!user) {
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
+        }
+        const amount = Number(payload.amount || 0);
+        if (!amount || amount < 1) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Invalid amount");
+        }
+        const fee = calculateFee(amount);
+        const totalDebit = amount + fee;
+        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: user._id, balance: { $gte: totalDebit } }, { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } }, { session });
+        if (debitRes.matchedCount === 0) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Insufficient balance");
+        }
+        if (fee > 0) {
+            const adminWalletId = yield getSystemAdminWalletId(session);
+            yield wallet_model_1.Wallet.updateOne({ _id: adminWalletId }, { $inc: { balance: fee }, $set: { lastTransactionAt: new Date() } }, { session });
+        }
+        const referenceId = getTransactionId();
+        yield transaction_model_1.Transaction.create([
+            {
+                sender: user._id,
+                amount,
+                fee,
+                type: transaction_interface_1.TransactionType.WITHDRAW,
+                entry: transaction_interface_1.TransactionEntry.DEBIT,
+                referenceId,
+                status: transaction_interface_1.TransactionStatus.SUCCESS,
+                transactionId: `${referenceId}_D`,
+                processedAt: new Date(),
+            },
+        ], { session, ordered: true });
+        yield session.commitTransaction();
+        session.endSession();
+        return { success: true, message: "Withdraw successful", referenceId };
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        session.endSession();
+        throw error;
+    }
+});
 exports.transactionService = {
     addMoney,
+    withdraw,
     sendMoney,
     cashIn,
     cashOut,

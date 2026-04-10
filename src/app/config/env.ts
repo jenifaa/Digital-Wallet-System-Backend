@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
-
 interface EnvConfig {
   PORT: string;
   DB_URL: string;
@@ -12,11 +11,12 @@ interface EnvConfig {
   JWT_REFRESH_EXPIRES: string;
   SUPER_ADMIN_EMAIL: string;
   SUPER_ADMIN_PASSWORD: string;
-  EXPRESS_SESSION_SECRET: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_CALLBACK_URL: string;
+  EXPRESS_SESSION_SECRET: string;
   FRONTEND_URL: string;
+
   SSL: {
     STORE_ID: string;
     STORE_PASS: string;
@@ -30,7 +30,6 @@ interface EnvConfig {
     SSL_VALIDATION_API: string;
     SSL_IPN_URL: string;
   };
-
   EMAIL_SENDER: {
     SMTP_HOST: string;
     SMTP_PORT: string;
@@ -44,7 +43,6 @@ interface EnvConfig {
   REDIS_USERNAME: string;
   REDIS_PASSWORD: string;
 }
-
 const loadEnvVariables = (): EnvConfig => {
   const requiredEnvVariables: string[] = [
     "PORT",
@@ -57,10 +55,10 @@ const loadEnvVariables = (): EnvConfig => {
     "JWT_REFRESH_EXPIRES",
     "SUPER_ADMIN_EMAIL",
     "SUPER_ADMIN_PASSWORD",
-    "EXPRESS_SESSION_SECRET",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
     "GOOGLE_CALLBACK_URL",
+    "EXPRESS_SESSION_SECRET",
     "FRONTEND_URL",
     "SSL_STORE_ID",
     "SSL_STORE_PASS",
@@ -72,7 +70,6 @@ const loadEnvVariables = (): EnvConfig => {
     "SSL_SUCCESS_BACKEND_URL",
     "SSL_FAIL_BACKEND_URL",
     "SSL_CANCEL_BACKEND_URL",
-    "SSL_IPN_URL",
     "SMTP_HOST",
     "SMTP_PORT",
     "SMTP_USER",
@@ -82,12 +79,17 @@ const loadEnvVariables = (): EnvConfig => {
     "REDIS_PORT",
     "REDIS_USERNAME",
     "REDIS_PASSWORD",
+    "SSL_IPN_URL",
   ];
   requiredEnvVariables.forEach((key) => {
     if (!process.env[key]) {
-      throw new Error(`Missing required env variable ${key}`);
+      throw new Error(`missing required env variable ${key}`);
     }
   });
+
+
+
+
   return {
     PORT: process.env.PORT as string,
     DB_URL: process.env.DB_URL as string,
@@ -100,10 +102,11 @@ const loadEnvVariables = (): EnvConfig => {
 
     SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL as string,
     SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD as string,
-    EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET as string,
+
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
     GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL as string,
+    EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET as string,
     FRONTEND_URL: process.env.FRONTEND_URL as string,
     SSL: {
       STORE_ID: process.env.SSL_STORE_ID as string,
@@ -118,13 +121,11 @@ const loadEnvVariables = (): EnvConfig => {
       SSL_CANCEL_BACKEND_URL: process.env.SSL_CANCEL_BACKEND_URL as string,
       SSL_IPN_URL: process.env.SSL_IPN_URL as string,
     },
-
     EMAIL_SENDER: {
       SMTP_HOST: process.env.SMTP_HOST as string,
       SMTP_PORT: process.env.SMTP_PORT as string,
       SMTP_USER: process.env.SMTP_USER as string,
       SMTP_PASS: process.env.SMTP_PASS as string,
-
       SMTP_FROM: process.env.SMTP_FROM as string,
     },
 
@@ -134,5 +135,4 @@ const loadEnvVariables = (): EnvConfig => {
     REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
   };
 };
-
 export const envVars = loadEnvVariables();

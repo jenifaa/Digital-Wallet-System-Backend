@@ -59,6 +59,16 @@ const CashOut = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 
         data: result,
     });
 }));
+const Withdraw = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const result = yield transaction_service_1.transactionService.withdraw(req.body, decodedToken.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "Withdraw successful",
+        data: result,
+    });
+}));
 // SSLCommerz redirects can be configured to hit /api/transaction/*
 const successCallback = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.query;
@@ -77,6 +87,7 @@ const cancelCallback = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void
 }));
 exports.transactionController = {
     AddMoney,
+    Withdraw,
     SendMoney,
     CashIn,
     CashOut,

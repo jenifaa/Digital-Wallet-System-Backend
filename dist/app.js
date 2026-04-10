@@ -24,6 +24,7 @@ app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 app.use((0, cookie_parser_1.default)());
 app.set("trust proxy", 1);
+app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({
     origin: env_1.envVars.FRONTEND_URL,
     credentials: true,

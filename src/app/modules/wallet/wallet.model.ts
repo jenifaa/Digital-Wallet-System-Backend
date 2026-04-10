@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 import { IWallet, WalletStatus, Currency } from "./wallet.interface";
-import { Role } from "../user/user.interface";
+
 
 const walletSchema = new Schema<IWallet>(
   {

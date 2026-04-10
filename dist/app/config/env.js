@@ -18,10 +18,10 @@ const loadEnvVariables = () => {
         "JWT_REFRESH_EXPIRES",
         "SUPER_ADMIN_EMAIL",
         "SUPER_ADMIN_PASSWORD",
-        "EXPRESS_SESSION_SECRET",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
         "GOOGLE_CALLBACK_URL",
+        "EXPRESS_SESSION_SECRET",
         "FRONTEND_URL",
         "SSL_STORE_ID",
         "SSL_STORE_PASS",
@@ -33,7 +33,6 @@ const loadEnvVariables = () => {
         "SSL_SUCCESS_BACKEND_URL",
         "SSL_FAIL_BACKEND_URL",
         "SSL_CANCEL_BACKEND_URL",
-        "SSL_IPN_URL",
         "SMTP_HOST",
         "SMTP_PORT",
         "SMTP_USER",
@@ -43,10 +42,11 @@ const loadEnvVariables = () => {
         "REDIS_PORT",
         "REDIS_USERNAME",
         "REDIS_PASSWORD",
+        "SSL_IPN_URL",
     ];
     requiredEnvVariables.forEach((key) => {
         if (!process.env[key]) {
-            throw new Error(`Missing required env variable ${key}`);
+            throw new Error(`missing required env variable ${key}`);
         }
     });
     return {
@@ -60,10 +60,10 @@ const loadEnvVariables = () => {
         JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES,
         SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL,
         SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD,
-        EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET,
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
         GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+        EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET,
         FRONTEND_URL: process.env.FRONTEND_URL,
         SSL: {
             STORE_ID: process.env.SSL_STORE_ID,
