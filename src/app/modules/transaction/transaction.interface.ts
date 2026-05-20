@@ -25,7 +25,7 @@ export const AGENT_COMMISSION_PERCENT = 2;
 export interface ITransaction {
   _id?: Types.ObjectId;
   sender?: Types.ObjectId;
-  receiver?: Types.ObjectId;
+  receiver?: Types.ObjectId | string;
   amount: number;
   type: TransactionType;
   status: TransactionStatus;

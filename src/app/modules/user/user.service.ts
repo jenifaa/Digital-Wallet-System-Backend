@@ -122,10 +122,14 @@ const updateUser = async (
     }
   }
 
-  const newUpdatedUser = await User.findByIdAndUpdate(userId, payload, {
-    new: true,
+const newUpdatedUser = await User.findByIdAndUpdate(
+  userId,
+  payload,
+  {
+    returnDocument: "after",
     runValidators: true,
-  });
+  }
+);
   return newUpdatedUser;
 };
 

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import  bcryptjs  from 'bcryptjs';
 import AppError from "../../errorHelpers/AppError";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { walletSearchableFields } from "./wallet.constant";
 import { Wallet } from "./wallet.model";
-import { Types } from 'mongoose';
+
 import httpStatus from "http-status-codes";
 import { User } from "../user/user.model";
 import jwt from "jsonwebtoken";

@@ -15,6 +15,8 @@ import { SSLService } from "../sslCommerz/sslCommerz.service";
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { Wallet } from "../wallet/wallet.model";
 import { envVars } from "../../config/env";
+import { Role } from "../user/user.interface";
+import { Types } from "mongoose";
 
 const getTransactionId = () => {
   return `trans_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -125,7 +127,9 @@ const sendMoney = async (payload: Partial<ITransaction>, userId: string) => {
       throw new AppError(httpStatus.BAD_REQUEST, "Receiver is required");
     }
 
-    const receiverUser = await User.findById(payload.receiver).select("_id");
+    const receiverUser = await User.findOne({
+      phone: payload.receiver as string,
+    }).select("_id phone");
     if (!receiverUser) {
       throw new AppError(httpStatus.NOT_FOUND, "Receiver not found");
     }
@@ -140,7 +144,10 @@ const sendMoney = async (payload: Partial<ITransaction>, userId: string) => {
 
     const debitRes = await Wallet.updateOne(
       { user: senderUser._id, balance: { $gte: totalDebit } },
-      { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } },
+      {
+        $inc: { balance: -totalDebit },
+        $set: { lastTransactionAt: new Date() },
+      },
       { session },
     );
     if (debitRes.matchedCount === 0) {
@@ -193,7 +200,7 @@ const sendMoney = async (payload: Partial<ITransaction>, userId: string) => {
           processedAt: new Date(),
         },
       ],
-      { session,ordered: true },
+      { session, ordered: true },
     );
 
     await session.commitTransaction();
@@ -225,10 +232,13 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
     if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
 
     const fee = 0;
-     const commission = Math.round((amount * AGENT_COMMISSION_PERCENT) / 100);
+    const commission = Math.round((amount * AGENT_COMMISSION_PERCENT) / 100);
     const debitRes = await Wallet.updateOne(
       { user: agent._id, balance: { $gte: amount + fee } },
-      { $inc: { balance: -(amount + fee) }, $set: { lastTransactionAt: new Date() } },
+      {
+        $inc: { balance: -(amount + fee) },
+        $set: { lastTransactionAt: new Date() },
+      },
       { session },
     );
     if (debitRes.matchedCount === 0) {
@@ -243,9 +253,12 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
     if (creditRes.matchedCount === 0) {
       throw new AppError(httpStatus.NOT_FOUND, "User wallet not found");
     }
-        await Wallet.updateOne(
+    await Wallet.updateOne(
       { user: agent._id },
-      { $inc: { balance: commission }, $set: { lastTransactionAt: new Date() } },
+      {
+        $inc: { balance: commission },
+        $set: { lastTransactionAt: new Date() },
+      },
       { session },
     );
 
@@ -255,7 +268,7 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
       [
         {
           sender: agent._id,
-          receiver: user._id,
+          receiver: user.phone,
           amount,
           fee,
           type: TransactionType.CASH_IN,
@@ -267,7 +280,7 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
         },
         {
           sender: agent._id,
-          receiver: user._id,
+          receiver: user.phone,
           amount,
           fee: 0,
           type: TransactionType.CASH_IN,
@@ -278,7 +291,7 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
           processedAt: new Date(),
         },
       ],
-      { session,ordered: true },
+      { session, ordered: true },
     );
 
     await session.commitTransaction();
@@ -379,85 +392,305 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
 //   }
 // };
 
+// const cashOut = async (payload: { agent?: string; amount?: number }, userId: string) => {
+//   const session = await Transaction.startSession();
+//   session.startTransaction();
 
-const cashOut = async (payload: { agent?: string; amount?: number }, userId: string) => {
+//   try {
+//     const amount = Number(payload.amount || 0);
+//     if (!amount || amount < 1) throw new AppError(httpStatus.BAD_REQUEST, "Invalid amount");
+//     if (!payload.agent) throw new AppError(httpStatus.BAD_REQUEST, "Agent is required");
+
+//     const user = await User.findById(userId).select("_id");
+//     const agent = await User.findById(payload.agent).select("_id");
+//     if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//     if (!agent) throw new AppError(httpStatus.NOT_FOUND, "Agent not found");
+
+//     const fee = calculateFee(amount); // platform fee if any
+//     const commission = Math.round((amount * AGENT_COMMISSION_PERCENT) / 100);
+//     const totalDebit = amount + fee;
+
+//     // Debit user wallet
+//     const debitRes = await Wallet.updateOne(
+//       { user: user._id, balance: { $gte: totalDebit } },
+//       { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } },
+//       { session },
+//     );
+//     if (debitRes.matchedCount === 0) throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
+
+//     // Credit agent wallet with commission
+//     const creditRes = await Wallet.updateOne(
+//       { user: agent._id },
+//       { $inc: { balance: amount + commission }, $set: { lastTransactionAt: new Date() } },
+//       { session },
+//     );
+//     if (creditRes.matchedCount === 0) throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
+
+//     // Save transaction entries
+//     const referenceId = getTransactionId();
+//     await Transaction.create(
+//       [
+//         {
+//           sender: user._id,
+//           receiver: agent.phone,
+//           amount,
+//           fee,
+//           commission,
+//           type: TransactionType.CASH_OUT,
+//           entry: TransactionEntry.DEBIT,
+//           referenceId,
+//           status: TransactionStatus.SUCCESS,
+//           transactionId: `${referenceId}_D`,
+//           processedAt: new Date(),
+//         },
+//         {
+//           sender: user._id,
+//           receiver: agent.phone,
+//           amount,
+//           fee: 0,
+//           commission,
+//           type: TransactionType.CASH_OUT,
+//           entry: TransactionEntry.CREDIT,
+//           referenceId,
+//           status: TransactionStatus.SUCCESS,
+//           transactionId: `${referenceId}_C`,
+//           processedAt: new Date(),
+//         },
+//       ],
+//       { session, ordered: true },
+//     );
+
+//     await session.commitTransaction();
+//     session.endSession();
+//     return { success: true, message: "Cash-out successful", referenceId };
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+//     throw error;
+//   }
+// };
+
+const cashOut = async (
+  payload: { agent?: string; amount?: number },
+  userId: string,
+) => {
   const session = await Transaction.startSession();
+
   session.startTransaction();
 
   try {
+    // amount validation
     const amount = Number(payload.amount || 0);
-    if (!amount || amount < 1) throw new AppError(httpStatus.BAD_REQUEST, "Invalid amount");
-    if (!payload.agent) throw new AppError(httpStatus.BAD_REQUEST, "Agent is required");
 
+    if (!amount || amount < 1) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Invalid amount");
+    }
+
+    // agent validation
+    if (!payload.agent) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Agent is required");
+    }
+
+    // find user
     const user = await User.findById(userId).select("_id");
-    const agent = await User.findById(payload.agent).select("_id");
-    if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
-    if (!agent) throw new AppError(httpStatus.NOT_FOUND, "Agent not found");
 
-    const fee = calculateFee(amount); // platform fee if any
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    /**
+     * IMPORTANT FIX
+     *
+     * if frontend sends phone number:
+     *   01700000001
+     *
+     * mongoose crashes if you do:
+     *   { _id: "01700000001" }
+     *
+     * so first check if it's a valid ObjectId
+     */
+
+    let agent;
+
+    if (Types.ObjectId.isValid(payload.agent)) {
+      // search by ID
+      agent = await User.findById(payload.agent).select("_id phone role");
+    } else {
+      // search by phone
+      agent = await User.findOne({
+        phone: payload.agent,
+      }).select("_id phone role");
+    }
+
+    if (!agent) {
+      throw new AppError(httpStatus.NOT_FOUND, "Agent not found");
+    }
+
+    // optional role check
+    if (agent.role !== Role.AGENT) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "Selected user is not an agent",
+      );
+    }
+
+    // prevent self cashout
+    if (String(user._id) === String(agent._id)) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "You cannot cash out to yourself",
+      );
+    }
+
+    // fee + commission
+    const fee = calculateFee(amount);
+
     const commission = Math.round((amount * AGENT_COMMISSION_PERCENT) / 100);
+
     const totalDebit = amount + fee;
 
-    // Debit user wallet
+    // debit user wallet
     const debitRes = await Wallet.updateOne(
-      { user: user._id, balance: { $gte: totalDebit } },
-      { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } },
+      {
+        user: user._id,
+        balance: { $gte: totalDebit },
+      },
+      {
+        $inc: {
+          balance: -totalDebit,
+        },
+        $set: {
+          lastTransactionAt: new Date(),
+        },
+      },
       { session },
     );
-    if (debitRes.matchedCount === 0) throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
 
-    // Credit agent wallet with commission
+    if (debitRes.matchedCount === 0) {
+      throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
+    }
+
+    // credit agent wallet
     const creditRes = await Wallet.updateOne(
-      { user: agent._id },
-      { $inc: { balance: amount + commission }, $set: { lastTransactionAt: new Date() } },
+      {
+        user: agent._id,
+      },
+      {
+        $inc: {
+          balance: amount + commission,
+        },
+        $set: {
+          lastTransactionAt: new Date(),
+        },
+      },
       { session },
     );
-    if (creditRes.matchedCount === 0) throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
 
-    // Save transaction entries
-    const referenceId = getTransactionId();
-    await Transaction.create(
-      [
+    if (creditRes.matchedCount === 0) {
+      throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
+    }
+
+    // add fee to admin wallet
+    if (fee > 0) {
+      const adminWalletId = await getSystemAdminWalletId(session);
+
+      await Wallet.updateOne(
         {
-          sender: user._id,
-          receiver: agent._id,
-          amount,
-          fee,
-          commission,
-          type: TransactionType.CASH_OUT,
-          entry: TransactionEntry.DEBIT,
-          referenceId,
-          status: TransactionStatus.SUCCESS,
-          transactionId: `${referenceId}_D`,
-          processedAt: new Date(),
+          _id: adminWalletId,
         },
         {
+          $inc: {
+            balance: fee,
+          },
+          $set: {
+            lastTransactionAt: new Date(),
+          },
+        },
+        { session },
+      );
+    }
+
+    // transaction reference
+    const referenceId = getTransactionId();
+
+    // save transactions
+    await Transaction.create(
+      [
+        // debit entry
+        {
           sender: user._id,
+
+          // STORE AGENT OBJECT ID
           receiver: agent._id,
+
           amount,
-          fee: 0,
+
+          fee,
+
           commission,
+
           type: TransactionType.CASH_OUT,
-          entry: TransactionEntry.CREDIT,
+
+          entry: TransactionEntry.DEBIT,
+
           referenceId,
+
           status: TransactionStatus.SUCCESS,
+
+          transactionId: `${referenceId}_D`,
+
+          processedAt: new Date(),
+        },
+
+        // credit entry
+        {
+          sender: user._id,
+
+          // STORE AGENT OBJECT ID
+          receiver: agent._id,
+
+          amount,
+
+          fee: 0,
+
+          commission,
+
+          type: TransactionType.CASH_OUT,
+
+          entry: TransactionEntry.CREDIT,
+
+          referenceId,
+
+          status: TransactionStatus.SUCCESS,
+
           transactionId: `${referenceId}_C`,
+
           processedAt: new Date(),
         },
       ],
-      { session, ordered: true },
+      {
+        session,
+        ordered: true,
+      },
     );
 
     await session.commitTransaction();
+
     session.endSession();
-    return { success: true, message: "Cash-out successful", referenceId };
+
+    return {
+      success: true,
+      message: "Cash-out successful",
+      referenceId,
+    };
   } catch (error) {
     await session.abortTransaction();
+
     session.endSession();
+
     throw error;
   }
 };
-
 const withdraw = async (payload: Partial<ITransaction>, userId: string) => {
   const session = await Transaction.startSession();
   session.startTransaction();
@@ -478,7 +711,10 @@ const withdraw = async (payload: Partial<ITransaction>, userId: string) => {
 
     const debitRes = await Wallet.updateOne(
       { user: user._id, balance: { $gte: totalDebit } },
-      { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } },
+      {
+        $inc: { balance: -totalDebit },
+        $set: { lastTransactionAt: new Date() },
+      },
       { session },
     );
     if (debitRes.matchedCount === 0) {
@@ -522,11 +758,25 @@ const withdraw = async (payload: Partial<ITransaction>, userId: string) => {
   }
 };
 
+
+const getMyTransactions = async (userId: string) => {
+  const transactions = await Transaction.find({
+    $or: [
+      { sender: userId },
+      { receiver: userId },
+    ],
+  })
+    .populate("sender", "name email phone")
+    .populate("receiver", "name email phone")
+    .sort({ createdAt: -1 });
+
+  return transactions;
+};
 export const transactionService = {
   addMoney,
   withdraw,
   sendMoney,
   cashIn,
   cashOut,
-
+  getMyTransactions
 };

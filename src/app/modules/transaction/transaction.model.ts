@@ -61,5 +61,3 @@ export const Transaction = model<ITransaction>(
   "Transaction",
   transactionSchema,
 );
-
-

@@ -67,5 +67,11 @@ router.post(
 );
 
 
+router.get(
+  "/my-transactions",
+  checkAuth(...Object.values(Role)),
+  transactionController.GetMyTransactions,
+);
+
 
 export const TransactionRoutes = router;

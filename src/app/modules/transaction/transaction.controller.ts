@@ -46,7 +46,10 @@ const SendMoney = catchAsync(
 const CashIn = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const decodedToken = req.user as JwtPayload;
-    const result = await transactionService.cashIn(req.body, decodedToken.userId);
+    const result = await transactionService.cashIn(
+      req.body,
+      decodedToken.userId,
+    );
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.CREATED,
@@ -59,7 +62,10 @@ const CashIn = catchAsync(
 const CashOut = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const decodedToken = req.user as JwtPayload;
-    const result = await transactionService.cashOut(req.body, decodedToken.userId);
+    const result = await transactionService.cashOut(
+      req.body,
+      decodedToken.userId,
+    );
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.CREATED,
@@ -72,7 +78,10 @@ const CashOut = catchAsync(
 const Withdraw = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const decodedToken = req.user as JwtPayload;
-    const result = await transactionService.withdraw(req.body, decodedToken.userId);
+    const result = await transactionService.withdraw(
+      req.body,
+      decodedToken.userId,
+    );
 
     sendResponse(res, {
       success: true,
@@ -103,12 +112,23 @@ const failCallback = catchAsync(async (req: Request, res: Response) => {
 const cancelCallback = catchAsync(async (req: Request, res: Response) => {
   const query = req.query as Record<string, string>;
   const result = await PaymentService.cancelPayment(query);
-  res.redirect(
-    `${envVars.SSL.SSL_CANCEL_FRONTEND_URL}?transactionId=${query.transactionId || query.tran_id || query.tranId}&message=${result.message}&amount=${query.amount}&status=${query.status}`,
-  );
+  res.redirect(`${envVars.SSL.SSL_CANCEL_FRONTEND_URL}`);
 });
 
+const GetMyTransactions = catchAsync(async (req: Request, res: Response) => {
+  const decodedToken = req.user as JwtPayload;
 
+  const result = await transactionService.getMyTransactions(
+    decodedToken.userId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Transactions retrieved successfully",
+    data: result,
+  });
+});
 
 export const transactionController = {
   AddMoney,
@@ -119,5 +139,5 @@ export const transactionController = {
   successCallback,
   failCallback,
   cancelCallback,
-  
+  GetMyTransactions,
 };
