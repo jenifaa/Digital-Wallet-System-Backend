@@ -118,7 +118,7 @@ const updateUser = (userId, payload, decodedToken) => __awaiter(void 0, void 0, 
         }
     }
     const newUpdatedUser = yield user_model_1.User.findByIdAndUpdate(userId, payload, {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
     });
     return newUpdatedUser;

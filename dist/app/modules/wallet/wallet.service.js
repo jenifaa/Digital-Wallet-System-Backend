@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.walletService = void 0;
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const AppError_1 = __importDefault(require("../../errorHelpers/AppError"));
 const QueryBuilder_1 = require("../../utils/QueryBuilder");

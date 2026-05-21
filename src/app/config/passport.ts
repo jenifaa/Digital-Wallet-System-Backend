@@ -66,6 +66,7 @@ passport.use(
 );
 
 passport.use(
+  
   new GoogleStrategy(
     {
       clientID: envVars.GOOGLE_CLIENT_ID,
@@ -108,6 +109,7 @@ passport.use(
             picture: profile.photos?.[0].value,
             role: Role.USER,
             isVerified: true,
+            // phone:undefined,
             auths: [
               {
                 provider: "google",

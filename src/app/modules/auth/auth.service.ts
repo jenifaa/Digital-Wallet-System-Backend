@@ -10,6 +10,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import { envVars } from '../../config/env';
 import jwt from "jsonwebtoken"
 import { sendEmail } from '../../utils/sendEmail';
+import { Wallet } from '../wallet/wallet.model';
 
 
 
@@ -180,11 +181,50 @@ const forgetPassword = async (email: string) => {
   });
 };
 
+
+
+
+
+
+
+
+
+
+const setPhone = async (userId: string, phone: string) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user.phone) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Phone already set");
+  }
+
+
+  user.phone = phone;
+
+
+  if (!user.wallet) {
+    const wallet = await Wallet.create({
+      user: user._id,
+      balance: 50, 
+    });
+    user.wallet = wallet._id;
+  }
+
+  await user.save();
+
+  return user;
+};
+
+
 export const AuthServices = {
   credentialsLogin,
   changePassword,
   getNewAccessToken,
   resetPassword,
   setPassword,
-  forgetPassword
+  forgetPassword,
+  setPhone
 };

@@ -1,4 +1,3 @@
-
 import { envVars } from "../config/env";
 import { IAuthProvider, IUser, Role } from "../modules/user/user.interface";
 
@@ -23,7 +22,8 @@ export const seedSuperAdmin = async () => {
 
     const hashedPassword = await bcryptjs.hash(
       envVars.SUPER_ADMIN_PASSWORD,
-      Number(envVars.BCRYPT_SALT_ROUND));
+      Number(envVars.BCRYPT_SALT_ROUND),
+    );
 
     const authProvider: IAuthProvider = {
       provider: "credentials",
@@ -35,6 +35,7 @@ export const seedSuperAdmin = async () => {
       role: Role.SUPER_ADMIN,
       email: envVars.SUPER_ADMIN_EMAIL,
       password: hashedPassword,
+      phone: envVars.SUPER_ADMIN_PHONE,
       isVerified: true,
       auths: [authProvider],
     };

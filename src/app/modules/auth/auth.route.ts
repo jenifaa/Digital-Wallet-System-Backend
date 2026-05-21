@@ -32,6 +32,7 @@ router.post(
   checkAuth(...Object.values(Role)),
   AuthControllers.resetPassword,
 );
+router.post("/set-phone", AuthControllers.setPhone);
 router.get(
   "/google",
   async (req: Request, res: Response, next: NextFunction) => {

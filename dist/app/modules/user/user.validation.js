@@ -27,7 +27,11 @@ exports.createUserZodSchema = zod_1.default.object({
         .regex(/[@$!%*?&]/, {
         message: "Password must contain at least one special character (@$!%*?&)",
     }),
-    phone: zod_1.default.string().optional(),
+    phone: zod_1.default
+        .string()
+        .min(10, "Phone number too short")
+        .max(15, "Phone number too long")
+        .optional(),
     // .regex(/^(?:\+?88)?01[0-9]\d{8}$/, {
     //   message: "Invalid Bangladeshi phone number",
     // })

@@ -23,6 +23,8 @@ const transaction_model_1 = require("./transaction.model");
 const sslCommerz_service_1 = require("../sslCommerz/sslCommerz.service");
 const wallet_model_1 = require("../wallet/wallet.model");
 const env_1 = require("../../config/env");
+const user_interface_1 = require("../user/user.interface");
+const mongoose_1 = require("mongoose");
 const getTransactionId = () => {
     return `trans_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 };
@@ -106,7 +108,9 @@ const sendMoney = (payload, userId) => __awaiter(void 0, void 0, void 0, functio
         if (!payload.receiver) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Receiver is required");
         }
-        const receiverUser = yield user_model_1.User.findById(payload.receiver).select("_id");
+        const receiverUser = yield user_model_1.User.findOne({
+            phone: payload.receiver,
+        }).select("_id phone");
         if (!receiverUser) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Receiver not found");
         }
@@ -116,7 +120,10 @@ const sendMoney = (payload, userId) => __awaiter(void 0, void 0, void 0, functio
         }
         const fee = calculateFee(amount);
         const totalDebit = amount + fee;
-        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: senderUser._id, balance: { $gte: totalDebit } }, { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } }, { session });
+        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: senderUser._id, balance: { $gte: totalDebit } }, {
+            $inc: { balance: -totalDebit },
+            $set: { lastTransactionAt: new Date() },
+        }, { session });
         if (debitRes.matchedCount === 0) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Insufficient balance");
         }
@@ -184,7 +191,10 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
         const fee = 0;
         const commission = Math.round((amount * transaction_interface_1.AGENT_COMMISSION_PERCENT) / 100);
-        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: agent._id, balance: { $gte: amount + fee } }, { $inc: { balance: -(amount + fee) }, $set: { lastTransactionAt: new Date() } }, { session });
+        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: agent._id, balance: { $gte: amount + fee } }, {
+            $inc: { balance: -(amount + fee) },
+            $set: { lastTransactionAt: new Date() },
+        }, { session });
         if (debitRes.matchedCount === 0) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Insufficient agent balance");
         }
@@ -192,12 +202,15 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
         if (creditRes.matchedCount === 0) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User wallet not found");
         }
-        yield wallet_model_1.Wallet.updateOne({ user: agent._id }, { $inc: { balance: commission }, $set: { lastTransactionAt: new Date() } }, { session });
+        yield wallet_model_1.Wallet.updateOne({ user: agent._id }, {
+            $inc: { balance: commission },
+            $set: { lastTransactionAt: new Date() },
+        }, { session });
         const referenceId = getTransactionId();
         yield transaction_model_1.Transaction.create([
             {
                 sender: agent._id,
-                receiver: user._id,
+                receiver: user.phone,
                 amount,
                 fee,
                 type: transaction_interface_1.TransactionType.CASH_IN,
@@ -209,7 +222,7 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
             },
             {
                 sender: agent._id,
-                receiver: user._id,
+                receiver: user.phone,
                 amount,
                 fee: 0,
                 type: transaction_interface_1.TransactionType.CASH_IN,
@@ -310,37 +323,182 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
 //     throw error;
 //   }
 // };
+// const cashOut = async (payload: { agent?: string; amount?: number }, userId: string) => {
+//   const session = await Transaction.startSession();
+//   session.startTransaction();
+//   try {
+//     const amount = Number(payload.amount || 0);
+//     if (!amount || amount < 1) throw new AppError(httpStatus.BAD_REQUEST, "Invalid amount");
+//     if (!payload.agent) throw new AppError(httpStatus.BAD_REQUEST, "Agent is required");
+//     const user = await User.findById(userId).select("_id");
+//     const agent = await User.findById(payload.agent).select("_id");
+//     if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//     if (!agent) throw new AppError(httpStatus.NOT_FOUND, "Agent not found");
+//     const fee = calculateFee(amount); // platform fee if any
+//     const commission = Math.round((amount * AGENT_COMMISSION_PERCENT) / 100);
+//     const totalDebit = amount + fee;
+//     // Debit user wallet
+//     const debitRes = await Wallet.updateOne(
+//       { user: user._id, balance: { $gte: totalDebit } },
+//       { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } },
+//       { session },
+//     );
+//     if (debitRes.matchedCount === 0) throw new AppError(httpStatus.BAD_REQUEST, "Insufficient balance");
+//     // Credit agent wallet with commission
+//     const creditRes = await Wallet.updateOne(
+//       { user: agent._id },
+//       { $inc: { balance: amount + commission }, $set: { lastTransactionAt: new Date() } },
+//       { session },
+//     );
+//     if (creditRes.matchedCount === 0) throw new AppError(httpStatus.NOT_FOUND, "Agent wallet not found");
+//     // Save transaction entries
+//     const referenceId = getTransactionId();
+//     await Transaction.create(
+//       [
+//         {
+//           sender: user._id,
+//           receiver: agent.phone,
+//           amount,
+//           fee,
+//           commission,
+//           type: TransactionType.CASH_OUT,
+//           entry: TransactionEntry.DEBIT,
+//           referenceId,
+//           status: TransactionStatus.SUCCESS,
+//           transactionId: `${referenceId}_D`,
+//           processedAt: new Date(),
+//         },
+//         {
+//           sender: user._id,
+//           receiver: agent.phone,
+//           amount,
+//           fee: 0,
+//           commission,
+//           type: TransactionType.CASH_OUT,
+//           entry: TransactionEntry.CREDIT,
+//           referenceId,
+//           status: TransactionStatus.SUCCESS,
+//           transactionId: `${referenceId}_C`,
+//           processedAt: new Date(),
+//         },
+//       ],
+//       { session, ordered: true },
+//     );
+//     await session.commitTransaction();
+//     session.endSession();
+//     return { success: true, message: "Cash-out successful", referenceId };
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+//     throw error;
+//   }
+// };
 const cashOut = (payload, userId) => __awaiter(void 0, void 0, void 0, function* () {
     const session = yield transaction_model_1.Transaction.startSession();
     session.startTransaction();
     try {
+        // amount validation
         const amount = Number(payload.amount || 0);
-        if (!amount || amount < 1)
+        if (!amount || amount < 1) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Invalid amount");
-        if (!payload.agent)
+        }
+        // agent validation
+        if (!payload.agent) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Agent is required");
+        }
+        // find user
         const user = yield user_model_1.User.findById(userId).select("_id");
-        const agent = yield user_model_1.User.findById(payload.agent).select("_id");
-        if (!user)
+        if (!user) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
-        if (!agent)
+        }
+        /**
+         * IMPORTANT FIX
+         *
+         * if frontend sends phone number:
+         *   01700000001
+         *
+         * mongoose crashes if you do:
+         *   { _id: "01700000001" }
+         *
+         * so first check if it's a valid ObjectId
+         */
+        let agent;
+        if (mongoose_1.Types.ObjectId.isValid(payload.agent)) {
+            // search by ID
+            agent = yield user_model_1.User.findById(payload.agent).select("_id phone role");
+        }
+        else {
+            // search by phone
+            agent = yield user_model_1.User.findOne({
+                phone: payload.agent,
+            }).select("_id phone role");
+        }
+        if (!agent) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent not found");
-        const fee = calculateFee(amount); // platform fee if any
+        }
+        // optional role check
+        if (agent.role !== user_interface_1.Role.AGENT) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Selected user is not an agent");
+        }
+        // prevent self cashout
+        if (String(user._id) === String(agent._id)) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "You cannot cash out to yourself");
+        }
+        // fee + commission
+        const fee = calculateFee(amount);
         const commission = Math.round((amount * transaction_interface_1.AGENT_COMMISSION_PERCENT) / 100);
         const totalDebit = amount + fee;
-        // Debit user wallet
-        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: user._id, balance: { $gte: totalDebit } }, { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } }, { session });
-        if (debitRes.matchedCount === 0)
+        // debit user wallet
+        const debitRes = yield wallet_model_1.Wallet.updateOne({
+            user: user._id,
+            balance: { $gte: totalDebit },
+        }, {
+            $inc: {
+                balance: -totalDebit,
+            },
+            $set: {
+                lastTransactionAt: new Date(),
+            },
+        }, { session });
+        if (debitRes.matchedCount === 0) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Insufficient balance");
-        // Credit agent wallet with commission
-        const creditRes = yield wallet_model_1.Wallet.updateOne({ user: agent._id }, { $inc: { balance: amount + commission }, $set: { lastTransactionAt: new Date() } }, { session });
-        if (creditRes.matchedCount === 0)
+        }
+        // credit agent wallet
+        const creditRes = yield wallet_model_1.Wallet.updateOne({
+            user: agent._id,
+        }, {
+            $inc: {
+                balance: amount + commission,
+            },
+            $set: {
+                lastTransactionAt: new Date(),
+            },
+        }, { session });
+        if (creditRes.matchedCount === 0) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent wallet not found");
-        // Save transaction entries
+        }
+        // add fee to admin wallet
+        if (fee > 0) {
+            const adminWalletId = yield getSystemAdminWalletId(session);
+            yield wallet_model_1.Wallet.updateOne({
+                _id: adminWalletId,
+            }, {
+                $inc: {
+                    balance: fee,
+                },
+                $set: {
+                    lastTransactionAt: new Date(),
+                },
+            }, { session });
+        }
+        // transaction reference
         const referenceId = getTransactionId();
+        // save transactions
         yield transaction_model_1.Transaction.create([
+            // debit entry
             {
                 sender: user._id,
+                // STORE AGENT OBJECT ID
                 receiver: agent._id,
                 amount,
                 fee,
@@ -352,8 +510,10 @@ const cashOut = (payload, userId) => __awaiter(void 0, void 0, void 0, function*
                 transactionId: `${referenceId}_D`,
                 processedAt: new Date(),
             },
+            // credit entry
             {
                 sender: user._id,
+                // STORE AGENT OBJECT ID
                 receiver: agent._id,
                 amount,
                 fee: 0,
@@ -365,10 +525,17 @@ const cashOut = (payload, userId) => __awaiter(void 0, void 0, void 0, function*
                 transactionId: `${referenceId}_C`,
                 processedAt: new Date(),
             },
-        ], { session, ordered: true });
+        ], {
+            session,
+            ordered: true,
+        });
         yield session.commitTransaction();
         session.endSession();
-        return { success: true, message: "Cash-out successful", referenceId };
+        return {
+            success: true,
+            message: "Cash-out successful",
+            referenceId,
+        };
     }
     catch (error) {
         yield session.abortTransaction();
@@ -390,7 +557,10 @@ const withdraw = (payload, userId) => __awaiter(void 0, void 0, void 0, function
         }
         const fee = calculateFee(amount);
         const totalDebit = amount + fee;
-        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: user._id, balance: { $gte: totalDebit } }, { $inc: { balance: -totalDebit }, $set: { lastTransactionAt: new Date() } }, { session });
+        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: user._id, balance: { $gte: totalDebit } }, {
+            $inc: { balance: -totalDebit },
+            $set: { lastTransactionAt: new Date() },
+        }, { session });
         if (debitRes.matchedCount === 0) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Insufficient balance");
         }
@@ -422,10 +592,23 @@ const withdraw = (payload, userId) => __awaiter(void 0, void 0, void 0, function
         throw error;
     }
 });
+const getMyTransactions = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const transactions = yield transaction_model_1.Transaction.find({
+        $or: [
+            { sender: userId },
+            { receiver: userId },
+        ],
+    })
+        .populate("sender", "name email phone")
+        .populate("receiver", "name email phone")
+        .sort({ createdAt: -1 });
+    return transactions;
+});
 exports.transactionService = {
     addMoney,
     withdraw,
     sendMoney,
     cashIn,
     cashOut,
+    getMyTransactions
 };

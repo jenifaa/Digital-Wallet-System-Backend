@@ -35,6 +35,7 @@ const userTokens_1 = require("../../utils/userTokens");
 const env_1 = require("../../config/env");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const sendEmail_1 = require("../../utils/sendEmail");
+const wallet_model_1 = require("../wallet/wallet.model");
 const credentialsLogin = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = payload;
     const isUserExist = yield user_model_1.User.findOne({ email });
@@ -136,11 +137,31 @@ const forgetPassword = (email) => __awaiter(void 0, void 0, void 0, function* ()
         },
     });
 });
+const setPhone = (userId, phone) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_model_1.User.findById(userId);
+    if (!user) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
+    }
+    if (user.phone) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Phone already set");
+    }
+    user.phone = phone;
+    if (!user.wallet) {
+        const wallet = yield wallet_model_1.Wallet.create({
+            user: user._id,
+            balance: 50,
+        });
+        user.wallet = wallet._id;
+    }
+    yield user.save();
+    return user;
+});
 exports.AuthServices = {
     credentialsLogin,
     changePassword,
     getNewAccessToken,
     resetPassword,
     setPassword,
-    forgetPassword
+    forgetPassword,
+    setPhone
 };

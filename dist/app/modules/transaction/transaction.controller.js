@@ -83,7 +83,17 @@ const failCallback = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0
 const cancelCallback = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const query = req.query;
     const result = yield payment_service_1.PaymentService.cancelPayment(query);
-    res.redirect(`${env_1.envVars.SSL.SSL_CANCEL_FRONTEND_URL}?transactionId=${query.transactionId || query.tran_id || query.tranId}&message=${result.message}&amount=${query.amount}&status=${query.status}`);
+    res.redirect(`${env_1.envVars.SSL.SSL_CANCEL_FRONTEND_URL}`);
+}));
+const GetMyTransactions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const result = yield transaction_service_1.transactionService.getMyTransactions(decodedToken.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Transactions retrieved successfully",
+        data: result,
+    });
 }));
 exports.transactionController = {
     AddMoney,
@@ -94,4 +104,5 @@ exports.transactionController = {
     successCallback,
     failCallback,
     cancelCallback,
+    GetMyTransactions,
 };

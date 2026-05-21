@@ -132,8 +132,24 @@ const forgetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaite
         data: null,
     });
 }));
-const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    let redirectTo = req.query.state ? req.query.state : "";
+// const googleCallbackController = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     console.log(req.query.state);
+//     let redirectTo = req.query.state ? (req.query.state as string) : "";
+//     if (redirectTo.startsWith("/")) {
+//       redirectTo = redirectTo.slice(1);
+//     }
+//     const user = req.user;
+//     if (!user) {
+//       throw new AppError(httpStatus.NOT_FOUND, "User not found");
+//     }
+//     const tokenInfo = createUserToken(user);
+//     setAuthCookie(res, tokenInfo);
+//     res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
+//   },
+// );
+const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let redirectTo = req.query.state || "";
     if (redirectTo.startsWith("/")) {
         redirectTo = redirectTo.slice(1);
     }
@@ -141,9 +157,30 @@ const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res, next) =
     if (!user) {
         throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
     }
+    if (!user.phone) {
+        return res.redirect(`${env_1.envVars.FRONTEND_URL}/set-phone?userId=${user._id}&next=${redirectTo}`);
+    }
     const tokenInfo = (0, userTokens_1.createUserToken)(user);
     (0, setCookie_1.setAuthCookie)(res, tokenInfo);
-    res.redirect(`${env_1.envVars.FRONTEND_URL}/${redirectTo}`);
+    return res.redirect(`${env_1.envVars.FRONTEND_URL}/${redirectTo}`);
+}));
+const setPhone = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId, phone } = req.body;
+    if (!userId || !phone) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "userId and phone are required");
+    }
+    const user = yield auth_service_1.AuthServices.setPhone(userId, phone);
+    const tokenInfo = (0, userTokens_1.createUserToken)(user);
+    (0, setCookie_1.setAuthCookie)(res, tokenInfo);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Phone set successfully",
+        data: {
+            accessToken: tokenInfo.accessToken,
+            refreshToken: tokenInfo.refreshToken,
+        },
+    });
 }));
 exports.AuthControllers = {
     credentialsLogin,
@@ -153,5 +190,6 @@ exports.AuthControllers = {
     resetPassword,
     setPassword,
     forgetPassword,
-    googleCallbackController
+    googleCallbackController,
+    setPhone
 };
