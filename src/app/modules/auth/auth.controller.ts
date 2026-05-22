@@ -178,13 +178,13 @@ const forgetPassword = catchAsync(
 const googleCallbackController = catchAsync(
   async (req: Request, res: Response) => {
     let redirectTo = (req.query.state as string) || "";
-
     if (redirectTo.startsWith("/")) {
       redirectTo = redirectTo.slice(1);
     }
 
-   const user = req.user as IUser & Document;
- 
+    const user = req.user as IUser & Document;
+
+    console.log("USER FROM PASSPORT:", JSON.stringify(user)); // 👈 add this
 
     if (!user) {
       throw new AppError(httpStatus.NOT_FOUND, "User not found");
@@ -196,10 +196,8 @@ const googleCallbackController = catchAsync(
       );
     }
 
-
     const tokenInfo = createUserToken(user);
     setAuthCookie(res, tokenInfo);
-
 
     return res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
   },
@@ -218,9 +216,11 @@ const setPhone = catchAsync(
 
     const user = await AuthServices.setPhone(userId, phone);
 
-
     const tokenInfo = createUserToken(user);
     setAuthCookie(res, tokenInfo);
+
+    // ✅ Return user data too (minus password)
+    const { password, ...rest } = user.toObject();
 
     sendResponse(res, {
       success: true,
@@ -229,6 +229,7 @@ const setPhone = catchAsync(
       data: {
         accessToken: tokenInfo.accessToken,
         refreshToken: tokenInfo.refreshToken,
+        user: rest, 
       },
     });
   },

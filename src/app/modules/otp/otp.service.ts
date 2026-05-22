@@ -23,12 +23,14 @@ const sendOTP = async (email: string, name: string) => {
   const otp = generateOtp();
 
   const redisKey = `otp:${email}`;
-  await redisClient.set(redisKey, otp, {
-    expiration: {
-      type: "EX",
-      value: OTP_EXPIRATION,
-    },
-  });
+  // await redisClient.set(redisKey, otp, {
+  //   expiration: {
+  //     type: "EX",
+  //     value: OTP_EXPIRATION,
+  //   },
+  // });
+
+  await redisClient.set(redisKey, otp, { ex: OTP_EXPIRATION });
 
   await sendEmail({
     to: email,
@@ -60,9 +62,9 @@ const verifyOTP = async (email: string, otp: string) => {
     throw new AppError(401, "Invalid OTP");
   }
 
-  await Promise.all([
+    await Promise.all([
     User.updateOne({ email }, { isVerified: true }, { runValidators: true }),
-    redisClient.del([redisKey]),
+    redisClient.del(redisKey), // ✅ single string, not array
   ]);
 };
 

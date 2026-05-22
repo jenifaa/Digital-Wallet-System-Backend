@@ -43,6 +43,8 @@ interface EnvConfig {
   REDIS_PORT: string;
   REDIS_USERNAME: string;
   REDIS_PASSWORD: string;
+  UPSTASH_REDIS_REST_TOKEN: string;
+  UPSTASH_REDIS_REST_URL: string;
 }
 const loadEnvVariables = (): EnvConfig => {
   const requiredEnvVariables: string[] = [
@@ -72,6 +74,7 @@ const loadEnvVariables = (): EnvConfig => {
     "SSL_SUCCESS_BACKEND_URL",
     "SSL_FAIL_BACKEND_URL",
     "SSL_CANCEL_BACKEND_URL",
+    "SSL_IPN_URL",
     "SMTP_HOST",
     "SMTP_PORT",
     "SMTP_USER",
@@ -81,7 +84,8 @@ const loadEnvVariables = (): EnvConfig => {
     "REDIS_PORT",
     "REDIS_USERNAME",
     "REDIS_PASSWORD",
-    "SSL_IPN_URL",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN",
   ];
   requiredEnvVariables.forEach((key) => {
     if (!process.env[key]) {
@@ -132,6 +136,8 @@ const loadEnvVariables = (): EnvConfig => {
     REDIS_PORT: process.env.REDIS_PORT as string,
     REDIS_USERNAME: process.env.REDIS_USERNAME as string,
     REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL as string,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN as string,
   };
 };
 export const envVars = loadEnvVariables();
