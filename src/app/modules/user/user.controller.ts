@@ -42,7 +42,7 @@ const updateUser = catchAsync(
     const userId = req.params.id;
 
     const verifiedToken = req.user;
-    const payload = req.body;
+    const payload = { ...req.body, picture: req.file?.path };
 
     const user = await UserServices.updateUser(
       userId as string,
@@ -117,7 +117,7 @@ const approveAgent = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.CREATED,
-      message:"Role updated to agent verified Successfully",
+      message: "Role updated to agent verified Successfully",
       data: result,
     });
   },

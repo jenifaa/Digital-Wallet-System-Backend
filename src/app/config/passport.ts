@@ -85,25 +85,25 @@ passport.use(
           return done(null, false, { message: "No email found" });
         }
 
-        let isUserExist = await User.findOne({ email });
+        let user = await User.findOne({ email });
 
-        if (isUserExist && !isUserExist.isVerified) {
+        if (user && !user.isVerified) {
           return done(null, false, { message: "User is not verified" });
         }
 
         if (
-          isUserExist &&
-          (isUserExist.isActive === IsActive.BLOCKED ||
-            isUserExist.isActive === IsActive.INACTIVE)
+          user &&
+          (user.isActive === IsActive.BLOCKED ||
+            user.isActive === IsActive.INACTIVE)
         ) {
-          return done(`User is ${isUserExist.isActive}`);
+          return done(`User is ${user.isActive}`);
         }
-        if (isUserExist && isUserExist.isDeleted) {
+        if (user && user.isDeleted) {
           return done(null, false, { message: "User is deleted" });
         }
 
-        if(!isUserExist){
-            isUserExist = await User.create({
+        if(!user){
+            user = await User.create({
             email,
             name: profile.displayName,
             picture: profile.photos?.[0].value,
@@ -136,7 +136,7 @@ passport.use(
         //   });
         // }
 
-        return done(null, isUserExist);
+        return done(null, user);
       } catch (error) {
         console.log("Google strategy error", error);
         return done(error);

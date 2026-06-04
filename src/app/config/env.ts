@@ -31,6 +31,11 @@ interface EnvConfig {
     SSL_VALIDATION_API: string;
     SSL_IPN_URL: string;
   };
+  CLOUDINARY: {
+    CLOUDINARY_CLOUD_NAME: string;
+    CLOUDINARY_API_KEY: string;
+    CLOUDINARY_API_SECRET: string;
+  };
   EMAIL_SENDER: {
     SMTP_HOST: string;
     SMTP_PORT: string;
@@ -80,6 +85,9 @@ const loadEnvVariables = (): EnvConfig => {
     "SMTP_USER",
     "SMTP_PASS",
     "SMTP_FROM",
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
     "REDIS_HOST",
     "REDIS_PORT",
     "REDIS_USERNAME",
@@ -138,6 +146,11 @@ const loadEnvVariables = (): EnvConfig => {
     REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL as string,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN as string,
+    CLOUDINARY: {
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME as string,
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
+      CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET as string,
+    },
   };
 };
 export const envVars = loadEnvVariables();

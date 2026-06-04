@@ -167,7 +167,7 @@ const forgetPassword = catchAsync(
 //       throw new AppError(httpStatus.NOT_FOUND, "User not found");
 //     }
 
-//     const tokenInfo = createUserToken(user);
+//     const tokenInfo = await createUserToken(user);
 
 //     setAuthCookie(res, tokenInfo);
 
@@ -176,7 +176,7 @@ const forgetPassword = catchAsync(
 // );
 
 const googleCallbackController = catchAsync(
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     let redirectTo = (req.query.state as string) || "";
     if (redirectTo.startsWith("/")) {
       redirectTo = redirectTo.slice(1);
@@ -184,7 +184,7 @@ const googleCallbackController = catchAsync(
 
     const user = req.user as IUser & Document;
 
-    console.log("USER FROM PASSPORT:", JSON.stringify(user)); // 👈 add this
+    console.log("USER FROM PASSPORT:", JSON.stringify(user)); 
 
     if (!user) {
       throw new AppError(httpStatus.NOT_FOUND, "User not found");
@@ -192,34 +192,36 @@ const googleCallbackController = catchAsync(
 
     if (!user.phone) {
       return res.redirect(
-        `${envVars.FRONTEND_URL}/set-phone?userId=${user._id}&next=${redirectTo}`
+        `${envVars.FRONTEND_URL}/set-phone?userId=${user._id}&next=${redirectTo}`,
       );
     }
 
-    const tokenInfo = createUserToken(user);
+    const tokenInfo = await createUserToken(user);
     setAuthCookie(res, tokenInfo);
 
     return res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
+    // return res.redirect(
+    //   `${envVars.FRONTEND_URL}/${redirectTo}?accessToken=${tokenInfo.accessToken}&refreshToken=${tokenInfo.refreshToken}`,
+    // );
   },
 );
-
-
-
 
 const setPhone = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { userId, phone } = req.body;
 
     if (!userId || !phone) {
-      throw new AppError(httpStatus.BAD_REQUEST, "userId and phone are required");
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "userId and phone are required",
+      );
     }
 
     const user = await AuthServices.setPhone(userId, phone);
 
-    const tokenInfo = createUserToken(user);
+    const tokenInfo = await createUserToken(user);
     setAuthCookie(res, tokenInfo);
 
-    // ✅ Return user data too (minus password)
     const { password, ...rest } = user.toObject();
 
     sendResponse(res, {
@@ -229,12 +231,11 @@ const setPhone = catchAsync(
       data: {
         accessToken: tokenInfo.accessToken,
         refreshToken: tokenInfo.refreshToken,
-        user: rest, 
+        user: rest,
       },
     });
   },
 );
-
 
 export const AuthControllers = {
   credentialsLogin,
@@ -245,5 +246,5 @@ export const AuthControllers = {
   setPassword,
   forgetPassword,
   googleCallbackController,
-  setPhone
+  setPhone,
 };

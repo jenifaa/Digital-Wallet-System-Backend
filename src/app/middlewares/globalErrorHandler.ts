@@ -6,6 +6,7 @@ import { handleDuplicateError } from "../helpers/handleDuplicateError";
 import { handleCastError } from "../helpers/handleCastError";
 import { handleZodError } from "../helpers/handleZodError";
 import { handleValidationError } from "../helpers/handleValidationError";
+import { deleteImageFromCloudinary } from "../config/cloudinary.config";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const globalErrorHandler = async (
@@ -18,6 +19,25 @@ export const globalErrorHandler = async (
   if (envVars.NODE_ENV === "development") {
     console.log(err);
   }
+
+
+
+
+  if (req.file) {
+    await deleteImageFromCloudinary(req.file.path);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
 
   let errorSources: TErrorSources[] = [];
   let statusCode = 500;

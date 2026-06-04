@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-
 import { Server } from "http";
 
 import mongoose from "mongoose";
@@ -17,13 +16,15 @@ const initializeContext = async () => {
   try {
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(envVars.DB_URL);
-      console.log("Connected to db");
+      console.log("✅ Connected to MongoDB");
     }
     await connectRedis();
     await seedSuperAdmin();
     isConnected = true;
+    console.log("✅ App initialized successfully");
   } catch (error) {
-    console.log(error);
+    console.error("❌ Initialization error:", error);
+    // ✅ don't rethrow — app continues even if something fails
   }
 };
 
@@ -31,7 +32,7 @@ const initializeContext = async () => {
 if (!process.env.VERCEL) {
   initializeContext().then(() => {
     server = app.listen(envVars.PORT, () => {
-      console.log(`Server is listening at ${envVars.PORT}`);
+      console.log(`✅ Server is listening at port ${envVars.PORT}`);
     });
   });
 }
@@ -39,31 +40,26 @@ if (!process.env.VERCEL) {
 // Global error handlers...
 process.on("SIGTERM", () => {
   console.log("SIGTERM detected");
-  if (server) {
+  if (!process.env.VERCEL && server) {
     server.close(() => process.exit(1));
-  } else {
-    process.exit(1);
-  }
-});
-process.on("unhandledRejection", () => {
-  console.log("UnhandledRejection detected");
-  if (server) {
-    server.close(() => process.exit(1));
-  } else {
-    process.exit(1);
-  }
-});
-process.on("uncaughtException", () => {
-  console.log("uncaughtException detected");
-  if (server) {
-    server.close(() => process.exit(1));
-  } else {
-    process.exit(1);
   }
 });
 
+process.on("unhandledRejection", (reason) => {
+  console.error("❌ UnhandledRejection detected:", reason);
+  if (!process.env.VERCEL && server) {
+    server.close(() => process.exit(1));
+  }
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("❌ uncaughtException detected:", error);
+  if (!process.env.VERCEL && server) {
+    server.close(() => process.exit(1));
+  }
+});
 
 export default async (req: any, res: any) => {
-  await initializeContext(); 
+  await initializeContext();
   return app(req, res);
 };

@@ -9,6 +9,7 @@ import bcryptjs from "bcryptjs";
 import httpStatus from "http-status-codes";
 import { Wallet } from "../wallet/wallet.model";
 import { sendEmail } from "../../utils/sendEmail";
+import { deleteImageFromCloudinary } from "../../config/cloudinary.config";
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
   const isUserExist = await User.findOne({ email });
@@ -122,14 +123,15 @@ const updateUser = async (
     }
   }
 
-const newUpdatedUser = await User.findByIdAndUpdate(
-  userId,
-  payload,
-  {
+  const newUpdatedUser = await User.findByIdAndUpdate(userId, payload, {
     returnDocument: "after",
     runValidators: true,
+  });
+
+  if (payload.picture && ifUserExist.picture) {
+    await deleteImageFromCloudinary(ifUserExist.picture);
   }
-);
+
   return newUpdatedUser;
 };
 
@@ -186,6 +188,7 @@ const approveAgent = async (userId: string, decodedToken: JwtPayload) => {
 
   return user;
 };
+
 export const UserServices = {
   createUser,
   getAllUsers,
