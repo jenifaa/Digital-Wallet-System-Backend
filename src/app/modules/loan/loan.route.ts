@@ -32,7 +32,7 @@ router.post(
 );
 
 router.get(
-  "/",
+  "/all",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   LoanController.getAllLoans,
 );

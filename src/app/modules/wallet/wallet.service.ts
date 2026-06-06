@@ -22,7 +22,10 @@ const getMyWallet = async (userId: string) => {
 };
 
 const getAllWallets = async (query: Record<string, string>) => {
-  const queryBuilder = new QueryBuilder(Wallet.find(), query);
+  const queryBuilder = new QueryBuilder(
+    Wallet.find().populate("user", "name email"), 
+    query,
+  );
   const wallets = await queryBuilder
     .search(walletSearchableFields)
     .filter()

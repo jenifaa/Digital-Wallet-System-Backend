@@ -10,25 +10,42 @@ import { AuditService } from "../audit/audit.service";
 
 const sendToUser = catchAsync(async (req: Request, res: Response, _next: NextFunction) => {
   const decoded = req.user as JwtPayload;
-  const notification = await NotificationService.sendToUser({
-    title: req.body.title,
-    message: req.body.message,
-    recipient: req.body.recipient,
-    sender: decoded.userId as unknown as import("mongoose").Types.ObjectId,
-    type: req.body.type || NotificationType.ADMIN,
-  });
+  const { type, title, message, recipient, role } = req.body;
+
+  let result;
+
+  if (type === NotificationType.BROADCAST) {
+    result = await NotificationService.broadcast(
+      {
+        title,
+        message,
+        sender: decoded.userId as unknown as import("mongoose").Types.ObjectId,
+      },
+      role,
+    );
+  } else {
+    result = await NotificationService.sendToUser({
+      title,
+      message,
+      recipient,
+      sender: decoded.userId as unknown as import("mongoose").Types.ObjectId,
+      type,
+    });
+  }
 
   await AuditService.logAudit(req, AuditAction.NOTIFICATION_SEND, {
     targetType: "User",
-    targetId: req.body.recipient,
+    targetId: recipient,
     performedBy: decoded.userId,
   });
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
-    message: "Notification sent successfully",
-    data: notification,
+    message: type === NotificationType.BROADCAST
+      ? "Broadcast sent successfully"
+      : "Notification sent successfully",
+    data: result,
   });
 });
 
