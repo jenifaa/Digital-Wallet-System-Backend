@@ -36,6 +36,7 @@ router.get(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   LoanController.getAllLoans,
 );
+router.get("/my-repayments", checkAuth(...Object.values(Role)), LoanController.getMyRepayments);
 
 router.patch(
   "/approve/:id",

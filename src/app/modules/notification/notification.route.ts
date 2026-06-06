@@ -8,10 +8,11 @@ import {
   sendNotificationSchema,
 } from "./notification.validation";
 
+
 const router = Router();
 
 router.get(
-  "/",
+  "/my",
   checkAuth(...Object.values(Role)),
   NotificationController.getMyNotifications,
 );
@@ -27,6 +28,7 @@ router.patch(
   checkAuth(...Object.values(Role)),
   NotificationController.markAsRead,
 );
+router.get("/unread-count", checkAuth(...Object.values(Role)), NotificationController.countUnread);
 
 router.post(
   "/send",
@@ -41,5 +43,7 @@ router.post(
   validateRequest(broadcastNotificationSchema),
   NotificationController.broadcast,
 );
+
+
 
 export const NotificationRoutes = router;

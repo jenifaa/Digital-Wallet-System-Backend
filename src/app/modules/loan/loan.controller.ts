@@ -99,6 +99,23 @@ const repayLoan = catchAsync(async (req: Request, res: Response, _next: NextFunc
   });
 });
 
+
+const getMyRepayments = catchAsync(async (req: Request, res: Response) => {
+  const decoded = req.user as JwtPayload;
+  const result = await LoanService.getMyRepayments(
+    decoded.userId,
+    req.query as Record<string, string>,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Repayment history retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
 export const LoanController = {
   requestLoan,
   getMyLoans,
@@ -106,4 +123,5 @@ export const LoanController = {
   approveLoan,
   rejectLoan,
   repayLoan,
+  getMyRepayments
 };

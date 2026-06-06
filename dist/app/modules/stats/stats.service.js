@@ -188,6 +188,96 @@ const getTransactionGrowthAnalytics = () => __awaiter(void 0, void 0, void 0, fu
         { $limit: 12 },
     ]);
 });
+const getPaymentStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    const [totalPayments, paymentsByStatus, paymentsByType, totalPaymentVolume, totalPaymentFees, paymentsLast7Days, paymentsLast30Days, avgTransactionAmount, highestPayments, paymentGrowthByMonth,] = yield Promise.all([
+        transaction_model_1.Transaction.countDocuments({
+            type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+        }),
+        transaction_model_1.Transaction.aggregate([
+            { $match: { type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] } } },
+            { $group: { _id: "$status", count: { $sum: 1 } } },
+        ]),
+        transaction_model_1.Transaction.aggregate([
+            { $match: { type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] } } },
+            { $group: { _id: "$type", count: { $sum: 1 }, volume: { $sum: "$amount" } } },
+        ]),
+        transaction_model_1.Transaction.aggregate([
+            {
+                $match: {
+                    status: transaction_interface_1.TransactionStatus.SUCCESS,
+                    type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+                },
+            },
+            { $group: { _id: null, totalVolume: { $sum: "$amount" } } },
+        ]),
+        transaction_model_1.Transaction.aggregate([
+            {
+                $match: {
+                    status: transaction_interface_1.TransactionStatus.SUCCESS,
+                    type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+                },
+            },
+            { $group: { _id: null, totalFees: { $sum: "$fee" } } },
+        ]),
+        transaction_model_1.Transaction.countDocuments({
+            type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+            createdAt: { $gte: sevenDaysAgo },
+        }),
+        transaction_model_1.Transaction.countDocuments({
+            type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+            createdAt: { $gte: thirtyDaysAgo },
+        }),
+        transaction_model_1.Transaction.aggregate([
+            {
+                $match: {
+                    status: transaction_interface_1.TransactionStatus.SUCCESS,
+                    type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+                },
+            },
+            { $group: { _id: null, avg: { $avg: "$amount" } } },
+        ]),
+        transaction_model_1.Transaction.find({
+            type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+            status: transaction_interface_1.TransactionStatus.SUCCESS,
+        })
+            .sort({ amount: -1 })
+            .limit(5)
+            .select("amount type status sender receiver createdAt fee"),
+        transaction_model_1.Transaction.aggregate([
+            {
+                $match: {
+                    status: transaction_interface_1.TransactionStatus.SUCCESS,
+                    type: { $in: [transaction_interface_1.TransactionType.SEND, transaction_interface_1.TransactionType.ADD, transaction_interface_1.TransactionType.WITHDRAW] },
+                },
+            },
+            {
+                $group: {
+                    _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+                    count: { $sum: 1 },
+                    volume: { $sum: "$amount" },
+                    fees: { $sum: "$fee" },
+                },
+            },
+            { $sort: { "_id.year": 1, "_id.month": 1 } },
+            { $limit: 12 },
+        ]),
+    ]);
+    return {
+        summary: {
+            totalPayments,
+            totalVolume: ((_a = totalPaymentVolume[0]) === null || _a === void 0 ? void 0 : _a.totalVolume) || 0,
+            totalFees: ((_b = totalPaymentFees[0]) === null || _b === void 0 ? void 0 : _b.totalFees) || 0,
+            avgTransactionAmount: ((_c = avgTransactionAmount[0]) === null || _c === void 0 ? void 0 : _c.avg) || 0,
+            paymentsLast7Days,
+            paymentsLast30Days,
+        },
+        paymentsByStatus,
+        paymentsByType,
+        highestPayments,
+        paymentGrowthByMonth,
+    };
+});
 exports.StatsService = {
     getUserStats,
     getWalletStats,
@@ -196,4 +286,5 @@ exports.StatsService = {
     getDashboardOverview,
     getUserGrowthAnalytics,
     getTransactionGrowthAnalytics,
+    getPaymentStats
 };

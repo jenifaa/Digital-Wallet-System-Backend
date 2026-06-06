@@ -217,6 +217,19 @@ const repayLoan = async (userId: string, loanId: string, amount?: number) => {
   }
 };
 
+const getMyRepayments = async (userId: string, query: Record<string, string>) => {
+  const queryBuilder = new QueryBuilder(
+    Transaction.find({
+      sender: userId,
+      type: TransactionType.WITHDRAW,
+      referenceId: { $regex: "_REPAY" },
+    }).sort({ createdAt: -1 }),
+    query,
+  );
+  const repayments = queryBuilder.filter().sort().paginate();
+  const [data, meta] = await Promise.all([repayments.build(), queryBuilder.getMeta()]);
+  return { data, meta };
+};
 export const LoanService = {
   requestLoan,
   getMyLoans,
@@ -224,4 +237,5 @@ export const LoanService = {
   approveLoan,
   rejectLoan,
   repayLoan,
+  getMyRepayments
 };

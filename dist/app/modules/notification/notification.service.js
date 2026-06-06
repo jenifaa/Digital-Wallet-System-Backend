@@ -65,10 +65,15 @@ const markAllAsRead = (userId) => __awaiter(void 0, void 0, void 0, function* ()
     const result = yield notification_model_1.Notification.updateMany({ recipient: userId, read: false }, { read: true });
     return { modifiedCount: result.modifiedCount };
 });
+const countUnread = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const count = yield notification_model_1.Notification.countDocuments({ recipient: userId, read: false });
+    return { unreadCount: count };
+});
 exports.NotificationService = {
     sendToUser,
     broadcast,
     getMyNotifications,
     markAsRead,
     markAllAsRead,
+    countUnread
 };

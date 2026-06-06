@@ -90,10 +90,21 @@ const markAllAsRead = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 
         data: result,
     });
 }));
+const countUnread = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decoded = req.user;
+    const result = yield notification_service_1.NotificationService.countUnread(decoded.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: http_status_codes_1.default.OK,
+        success: true,
+        message: "Unread notification count fetched successfully",
+        data: result,
+    });
+}));
 exports.NotificationController = {
     sendToUser,
     broadcast,
     getMyNotifications,
     markAsRead,
     markAllAsRead,
+    countUnread
 };

@@ -96,10 +96,23 @@ const markAllAsRead = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const countUnread = catchAsync(async (req: Request, res: Response) => {
+  const decoded = req.user as JwtPayload;
+  const result = await NotificationService.countUnread(decoded.userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Unread notification count fetched successfully",
+    data: result,
+  });
+});
+
 export const NotificationController = {
   sendToUser,
   broadcast,
   getMyNotifications,
   markAsRead,
   markAllAsRead,
+  countUnread
 };

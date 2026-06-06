@@ -34,6 +34,11 @@ router.get(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   StatsController.getWalletStats,
 );
+router.get(
+  "/payment",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  StatsController.getPaymentStats,
+);
 
 router.get(
   "/user-growth",

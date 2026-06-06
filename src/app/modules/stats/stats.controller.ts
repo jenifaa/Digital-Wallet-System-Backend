@@ -73,6 +73,17 @@ const getTransactionGrowthAnalytics = catchAsync(async (req: Request, res: Respo
   });
 });
 
+const getPaymentStats = catchAsync(async (_req: Request, res: Response) => {
+  const result = await StatsService.getPaymentStats();
+
+  sendResponse(res, {
+    success: true,
+    statusCode:200,
+    message: "Payment statistics retrieved successfully",
+    data: result,
+  });
+});
+
 export const StatsController = {
   getWalletStats,
   getLoanStats,
@@ -81,4 +92,5 @@ export const StatsController = {
   getDashboardOverview,
   getUserGrowthAnalytics,
   getTransactionGrowthAnalytics,
+  getPaymentStats
 };

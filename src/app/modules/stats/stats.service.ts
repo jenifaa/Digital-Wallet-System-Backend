@@ -214,6 +214,122 @@ const getTransactionGrowthAnalytics = async () => {
   ]);
 };
 
+
+
+
+
+
+const getPaymentStats = async () => {
+  const [
+    totalPayments,
+    paymentsByStatus,
+    paymentsByType,
+    totalPaymentVolume,
+    totalPaymentFees,
+    paymentsLast7Days,
+    paymentsLast30Days,
+    avgTransactionAmount,
+    highestPayments,
+    paymentGrowthByMonth,
+  ] = await Promise.all([
+    Transaction.countDocuments({
+      type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+    }),
+
+    Transaction.aggregate([
+      { $match: { type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] } } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+
+    Transaction.aggregate([
+      { $match: { type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] } } },
+      { $group: { _id: "$type", count: { $sum: 1 }, volume: { $sum: "$amount" } } },
+    ]),
+
+    Transaction.aggregate([
+      {
+        $match: {
+          status: TransactionStatus.SUCCESS,
+          type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+        },
+      },
+      { $group: { _id: null, totalVolume: { $sum: "$amount" } } },
+    ]),
+
+    Transaction.aggregate([
+      {
+        $match: {
+          status: TransactionStatus.SUCCESS,
+          type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+        },
+      },
+      { $group: { _id: null, totalFees: { $sum: "$fee" } } },
+    ]),
+
+    Transaction.countDocuments({
+      type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+      createdAt: { $gte: sevenDaysAgo },
+    }),
+
+    Transaction.countDocuments({
+      type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+      createdAt: { $gte: thirtyDaysAgo },
+    }),
+
+    Transaction.aggregate([
+      {
+        $match: {
+          status: TransactionStatus.SUCCESS,
+          type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+        },
+      },
+      { $group: { _id: null, avg: { $avg: "$amount" } } },
+    ]),
+
+    Transaction.find({
+      type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+      status: TransactionStatus.SUCCESS,
+    })
+      .sort({ amount: -1 })
+      .limit(5)
+      .select("amount type status sender receiver createdAt fee"),
+
+    Transaction.aggregate([
+      {
+        $match: {
+          status: TransactionStatus.SUCCESS,
+          type: { $in: [TransactionType.SEND, TransactionType.ADD, TransactionType.WITHDRAW] },
+        },
+      },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          count: { $sum: 1 },
+          volume: { $sum: "$amount" },
+          fees: { $sum: "$fee" },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      { $limit: 12 },
+    ]),
+  ]);
+
+  return {
+    summary: {
+      totalPayments,
+      totalVolume: totalPaymentVolume[0]?.totalVolume || 0,
+      totalFees: totalPaymentFees[0]?.totalFees || 0,
+      avgTransactionAmount: avgTransactionAmount[0]?.avg || 0,
+      paymentsLast7Days,
+      paymentsLast30Days,
+    },
+    paymentsByStatus,
+    paymentsByType,
+    highestPayments,
+    paymentGrowthByMonth,
+  };
+};
+
 export const StatsService = {
   getUserStats,
   getWalletStats,
@@ -222,4 +338,5 @@ export const StatsService = {
   getDashboardOverview,
   getUserGrowthAnalytics,
   getTransactionGrowthAnalytics,
+  getPaymentStats
 };
