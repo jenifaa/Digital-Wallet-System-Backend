@@ -20,10 +20,11 @@ const QueryBuilder_1 = require("../../utils/QueryBuilder");
 const wallet_constant_1 = require("./wallet.constant");
 const wallet_model_1 = require("./wallet.model");
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
-const user_model_1 = require("../user/user.model");
+const wallet_interface_1 = require("./wallet.interface");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const env_1 = require("../../config/env");
-const sendEmail_1 = require("../../utils/sendEmail");
+const emailService_1 = require("../../utils/emailService");
+const user_model_1 = require("../user/user.model");
 const getMyWallet = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const wallet = yield wallet_model_1.Wallet.findOne({ user: userId });
     if (!wallet) {
@@ -48,12 +49,16 @@ const getAllWallets = (query) => __awaiter(void 0, void 0, void 0, function* () 
 const blockWallet = (walletId) => __awaiter(void 0, void 0, void 0, function* () {
     const existingWallet = yield wallet_model_1.Wallet.findById(walletId);
     if (!existingWallet) {
-        throw new Error("Wallet not found.");
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Wallet not found.");
     }
-    return yield wallet_model_1.Wallet.findByIdAndUpdate(walletId, { isBlocked: true }, { new: true });
+    return yield wallet_model_1.Wallet.findByIdAndUpdate(walletId, { status: wallet_interface_1.WalletStatus.BLOCKED }, { new: true });
 });
 const unblockWallet = (walletId) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield wallet_model_1.Wallet.findByIdAndUpdate(walletId, { isBlocked: false }, { new: true });
+    const existingWallet = yield wallet_model_1.Wallet.findById(walletId);
+    if (!existingWallet) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Wallet not found.");
+    }
+    return yield wallet_model_1.Wallet.findByIdAndUpdate(walletId, { status: wallet_interface_1.WalletStatus.ACTIVE }, { new: true });
 });
 const normalizePin = (pin) => String(pin !== null && pin !== void 0 ? pin : "").trim();
 const setPinForUser = (userId, pin) => __awaiter(void 0, void 0, void 0, function* () {
@@ -91,15 +96,7 @@ const forgetPin = (email) => __awaiter(void 0, void 0, void 0, function* () {
         expiresIn: "10m",
     });
     const resetUILink = `${env_1.envVars.FRONTEND_URL}/reset-pin?id=${user._id}&token=${resetToken}`;
-    yield (0, sendEmail_1.sendEmail)({
-        to: user.email,
-        subject: "Wallet PIN reset",
-        templateName: "forgetPin",
-        templateData: {
-            name: user.name,
-            resetUILink,
-        },
-    });
+    yield emailService_1.emailService.sendPinReset(user.email, user.name, resetUILink);
     return { message: "Email sent successfully" };
 });
 const resetPin = (payload) => __awaiter(void 0, void 0, void 0, function* () {

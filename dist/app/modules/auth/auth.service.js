@@ -34,7 +34,7 @@ const user_model_1 = require("../user/user.model");
 const userTokens_1 = require("../../utils/userTokens");
 const env_1 = require("../../config/env");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const sendEmail_1 = require("../../utils/sendEmail");
+const emailService_1 = require("../../utils/emailService");
 const wallet_model_1 = require("../wallet/wallet.model");
 const credentialsLogin = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = payload;
@@ -127,15 +127,32 @@ const forgetPassword = (email) => __awaiter(void 0, void 0, void 0, function* ()
         expiresIn: "10m",
     });
     const resetUILink = `${env_1.envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`;
-    (0, sendEmail_1.sendEmail)({
-        to: isUserExist.email,
-        subject: " Password Reset",
-        templateName: "forgetPassword",
-        templateData: {
-            name: isUserExist.name,
-            resetUILink,
-        },
-    });
+    yield emailService_1.emailService.sendPasswordReset(isUserExist.email, isUserExist.name, resetUILink);
+});
+const resetPasswordWithToken = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, token, newPassword } = payload;
+    if (!id || !token || !newPassword) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "id, token and newPassword are required");
+    }
+    if (newPassword.length < 8) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Password must be at least 8 characters");
+    }
+    let decoded;
+    try {
+        decoded = jsonwebtoken_1.default.verify(token, env_1.envVars.JWT_ACCESS_SECRET);
+    }
+    catch (_a) {
+        throw new AppError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Invalid or expired reset token");
+    }
+    if (String(decoded.userId) !== String(id)) {
+        throw new AppError_1.default(http_status_codes_1.default.UNAUTHORIZED, "Invalid reset token");
+    }
+    const user = yield user_model_1.User.findById(id);
+    if (!user) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
+    }
+    user.password = yield bcryptjs_1.default.hash(newPassword, Number(env_1.envVars.BCRYPT_SALT_ROUND));
+    yield user.save();
 });
 const setPhone = (userId, phone) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findById(userId);
@@ -161,6 +178,7 @@ exports.AuthServices = {
     changePassword,
     getNewAccessToken,
     resetPassword,
+    resetPasswordWithToken,
     setPassword,
     forgetPassword,
     setPhone

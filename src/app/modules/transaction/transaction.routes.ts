@@ -11,6 +11,7 @@ import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 import { transactionController } from "./transaction.controller";
 import { requireWalletPin } from "../../middlewares/requireWalletPin";
+import { transactionRateLimiter } from "../../middlewares/rateLimiter";
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.post("/cancel", transactionController.cancelCallback);
 router.post(
   "/add-money",
   checkAuth(...Object.values(Role)),
+  transactionRateLimiter,
   requireWalletPin,
   validateRequest(addMoneySchema),
   transactionController.AddMoney,
@@ -41,12 +43,11 @@ router.post(
 router.post(
   "/send-money",
   checkAuth(Role.USER, Role.AGENT),
+  transactionRateLimiter,
   requireWalletPin,
   validateRequest(sendMoneySchema),
   transactionController.SendMoney,
 );
-
-
 
 // Cash In (Agent → User)
 router.post(
@@ -65,13 +66,18 @@ router.post(
   validateRequest(cashOutSchema),
   transactionController.CashOut,
 );
+router.post("/validate-payment", transactionController.validatePayment);
 
+router.get(
+  "/search",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  transactionController.searchTransactions,
+);
 
 router.get(
   "/my-transactions",
   checkAuth(...Object.values(Role)),
   transactionController.GetMyTransactions,
 );
-
 
 export const TransactionRoutes = router;

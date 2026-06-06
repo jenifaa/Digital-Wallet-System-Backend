@@ -15,6 +15,20 @@ export enum IsActive {
   INACTIVE = "INACTIVE",
   BLOCKED = "BLOCKED",
 }
+
+export enum AgentStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  SUSPENDED = "SUSPENDED",
+}
+
+export interface IAgentStatusHistory {
+  status: AgentStatus;
+  changedBy?: Types.ObjectId;
+  reason?: string;
+  changedAt: Date;
+}
 export interface IUser {
   _id?: Types.ObjectId;
   name: string;
@@ -27,6 +41,8 @@ export interface IUser {
   isActive?: IsActive;
   isVerified?: boolean;
   isAgentApproved?: boolean;
+  agentStatus?: AgentStatus;
+  agentStatusHistory?: IAgentStatusHistory[];
   role: Role;
   auths: IAuthProvider[];
   wallet?: Types.ObjectId;

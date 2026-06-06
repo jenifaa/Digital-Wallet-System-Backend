@@ -8,6 +8,7 @@ var TransactionType;
     TransactionType["SEND"] = "SEND";
     TransactionType["CASH_IN"] = "CASH_IN";
     TransactionType["CASH_OUT"] = "CASH_OUT";
+    TransactionType["PAYMENT"] = "PAYMENT";
 })(TransactionType || (exports.TransactionType = TransactionType = {}));
 var TransactionStatus;
 (function (TransactionStatus) {
@@ -15,6 +16,9 @@ var TransactionStatus;
     TransactionStatus["SUCCESS"] = "SUCCESS";
     TransactionStatus["FAILED"] = "FAILED";
     TransactionStatus["REVERSED"] = "REVERSED";
+    TransactionStatus["PAID"] = "PAID";
+    TransactionStatus["UNPAID"] = "UNPAID";
+    TransactionStatus["REFUNDED"] = "REFUNDED";
 })(TransactionStatus || (exports.TransactionStatus = TransactionStatus = {}));
 var TransactionEntry;
 (function (TransactionEntry) {

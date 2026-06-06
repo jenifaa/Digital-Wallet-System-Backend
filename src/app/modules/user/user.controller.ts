@@ -42,7 +42,8 @@ const updateUser = catchAsync(
     const userId = req.params.id;
 
     const verifiedToken = req.user;
-    const payload = { ...req.body, picture: req.file?.path };
+    const payload = { ...req.body};
+    // const payload = { ...req.body, picture: req.file?.path };
 
     const user = await UserServices.updateUser(
       userId as string,
@@ -53,6 +54,25 @@ const updateUser = catchAsync(
       success: true,
       statusCode: httpStatus.CREATED,
       message: "Users updated Successfully",
+      data: user,
+    });
+  },
+);
+const updateUserProfile = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    // const userId = req.params.id;
+
+    const verifiedToken = req.user;
+    const payload = {  picture: req.file?.path };
+
+    const user = await UserServices.updateUserProfile(
+      payload,
+      verifiedToken as JwtPayload,
+    );
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "User profile updated Successfully",
       data: user,
     });
   },
@@ -116,18 +136,103 @@ const approveAgent = catchAsync(
 
     sendResponse(res, {
       success: true,
-      statusCode: httpStatus.CREATED,
-      message: "Role updated to agent verified Successfully",
+      statusCode: httpStatus.OK,
+      message: "Agent approved successfully",
       data: result,
     });
   },
 );
+
+const applyForAgent = catchAsync(
+  async (req: Request, res: Response) => {
+    const decodedToken = req.user as JwtPayload;
+    const result = await UserServices.applyForAgent(decodedToken.userId);
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "Agent application submitted successfully",
+      data: result,
+    });
+  },
+);
+
+const rejectAgent = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.params.id;
+    const decodedToken = req.user as JwtPayload;
+    const result = await UserServices.rejectAgent(String(userId), decodedToken, req.body.reason);
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Agent rejected successfully",
+      data: result,
+    });
+  },
+);
+
+const suspendAgent = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.params.id;
+    const decodedToken = req.user as JwtPayload;
+    const result = await UserServices.suspendAgent(String(userId), decodedToken, req.body.reason);
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Agent suspended successfully",
+      data: result,
+    });
+  },
+);
+
+const reactivateAgent = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.params.id;
+    const decodedToken = req.user as JwtPayload;
+    const result = await UserServices.reactivateAgent(String(userId), decodedToken);
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Agent reactivated successfully",
+      data: result,
+    });
+  },
+);
+
+const searchUsers = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.searchUsers(req.query as Record<string, string>);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Users retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+const searchAgents = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.searchAgents(req.query as Record<string, string>);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Agents retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
 export const userControllers = {
   createUser,
   getAllUsers,
+  searchUsers,
+  searchAgents,
   getMe,
   updateUser,
   getSingleUser,
   makeAgent,
+  applyForAgent,
   approveAgent,
+  rejectAgent,
+  suspendAgent,
+  reactivateAgent,
+  updateUserProfile,
 };

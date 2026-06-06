@@ -21,9 +21,12 @@ const user_interface_1 = require("../modules/user/user.interface");
 const jwt_1 = require("../utils/jwt");
 const checkAuth = (...authRoles) => (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const accessToken = req.headers.authorization || req.cookies.accessToken;
+        let accessToken = req.headers.authorization || req.cookies.accessToken;
         if (!accessToken) {
             throw new AppError_1.default(403, "NO token received");
+        }
+        if (typeof accessToken === "string" && accessToken.startsWith("Bearer ")) {
+            accessToken = accessToken.slice(7);
         }
         const verifiedToken = (0, jwt_1.verifyToken)(accessToken, env_1.envVars.JWT_ACCESS_SECRET);
         const isUserExist = yield user_model_1.User.findOne({ email: verifiedToken.email });

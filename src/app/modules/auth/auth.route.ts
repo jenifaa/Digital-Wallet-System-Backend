@@ -3,10 +3,11 @@ import { AuthControllers } from "./auth.controller";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 import passport from "passport";
+import { authRateLimiter } from "../../middlewares/rateLimiter";
 import { envVars } from "../../config/env";
 
 const router = Router();
-router.post("/login", AuthControllers.credentialsLogin);
+router.post("/login", authRateLimiter, AuthControllers.credentialsLogin);
 router.post("/refresh-token", AuthControllers.getNewAccessToken);
 router.post("/logout", AuthControllers.logout);
 router.post(
@@ -24,7 +25,14 @@ router.post(
 
 router.post(
   "/forget-password",
+  authRateLimiter,
   AuthControllers.forgetPassword
+);
+
+router.post(
+  "/reset-password-token",
+  authRateLimiter,
+  AuthControllers.resetPasswordWithToken,
 );
 
 router.post(

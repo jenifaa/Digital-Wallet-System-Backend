@@ -101,6 +101,15 @@ const getNewAccessToken = (0, catchAsync_1.catchAsync)((req, res, next) => __awa
         data: tokenInfo,
     });
 }));
+const resetPasswordWithToken = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    yield auth_service_1.AuthServices.resetPasswordWithToken(req.body);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Password Reset Successfully",
+        data: null,
+    });
+}));
 const resetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const decodedToken = req.user;
     yield auth_service_1.AuthServices.resetPassword(req.body, decodedToken);
@@ -143,12 +152,12 @@ const forgetPassword = (0, catchAsync_1.catchAsync)((req, res, next) => __awaite
 //     if (!user) {
 //       throw new AppError(httpStatus.NOT_FOUND, "User not found");
 //     }
-//     const tokenInfo = createUserToken(user);
+//     const tokenInfo = await createUserToken(user);
 //     setAuthCookie(res, tokenInfo);
 //     res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`);
 //   },
 // );
-const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     let redirectTo = req.query.state || "";
     if (redirectTo.startsWith("/")) {
         redirectTo = redirectTo.slice(1);
@@ -160,9 +169,12 @@ const googleCallbackController = (0, catchAsync_1.catchAsync)((req, res) => __aw
     if (!user.phone) {
         return res.redirect(`${env_1.envVars.FRONTEND_URL}/set-phone?userId=${user._id}&next=${redirectTo}`);
     }
-    const tokenInfo = (0, userTokens_1.createUserToken)(user);
+    const tokenInfo = yield (0, userTokens_1.createUserToken)(user);
     (0, setCookie_1.setAuthCookie)(res, tokenInfo);
     return res.redirect(`${env_1.envVars.FRONTEND_URL}/${redirectTo}`);
+    // return res.redirect(
+    //   `${envVars.FRONTEND_URL}/${redirectTo}?accessToken=${tokenInfo.accessToken}&refreshToken=${tokenInfo.refreshToken}`,
+    // );
 }));
 const setPhone = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, phone } = req.body;
@@ -170,8 +182,9 @@ const setPhone = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void
         throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "userId and phone are required");
     }
     const user = yield auth_service_1.AuthServices.setPhone(userId, phone);
-    const tokenInfo = (0, userTokens_1.createUserToken)(user);
+    const tokenInfo = yield (0, userTokens_1.createUserToken)(user);
     (0, setCookie_1.setAuthCookie)(res, tokenInfo);
+    const _a = user.toObject(), { password } = _a, rest = __rest(_a, ["password"]);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.OK,
@@ -179,6 +192,7 @@ const setPhone = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void
         data: {
             accessToken: tokenInfo.accessToken,
             refreshToken: tokenInfo.refreshToken,
+            user: rest,
         },
     });
 }));
@@ -188,8 +202,9 @@ exports.AuthControllers = {
     getNewAccessToken,
     changePassword,
     resetPassword,
+    resetPasswordWithToken,
     setPassword,
     forgetPassword,
     googleCallbackController,
-    setPhone
+    setPhone,
 };

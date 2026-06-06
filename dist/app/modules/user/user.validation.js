@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserZodSchema = exports.createUserZodSchema = void 0;
+exports.rejectAgentSchema = exports.updateUserProfileZodSchema = exports.updateUserZodSchema = exports.createUserZodSchema = void 0;
 const zod_1 = __importDefault(require("zod"));
 const user_interface_1 = require("./user.interface");
 exports.createUserZodSchema = zod_1.default.object({
@@ -57,4 +57,10 @@ exports.updateUserZodSchema = zod_1.default.object({
         .string()
         .min(5, { message: "Address must be at least 5 characters long" })
         .optional(),
+});
+exports.updateUserProfileZodSchema = zod_1.default.object({
+    picture: zod_1.default.string().optional(),
+});
+exports.rejectAgentSchema = zod_1.default.object({
+    reason: zod_1.default.string().optional(),
 });

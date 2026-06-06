@@ -20,6 +20,18 @@ const userSchema = new mongoose_1.Schema({
     address: { type: String },
     isDeleted: { type: Boolean, default: false },
     isAgentApproved: { type: Boolean, default: false },
+    agentStatus: {
+        type: String,
+        enum: Object.values(user_interface_1.AgentStatus),
+    },
+    agentStatusHistory: [
+        {
+            status: { type: String, enum: Object.values(user_interface_1.AgentStatus), required: true },
+            changedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
+            reason: { type: String },
+            changedAt: { type: Date, default: Date.now },
+        },
+    ],
     isActive: {
         type: String,
         enum: Object.values(user_interface_1.IsActive),

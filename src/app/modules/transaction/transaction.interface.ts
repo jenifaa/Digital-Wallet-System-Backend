@@ -7,6 +7,7 @@ export enum TransactionType {
   SEND = "SEND",
   CASH_IN = "CASH_IN",
   CASH_OUT = "CASH_OUT",
+  PAYMENT = "PAYMENT",
 }
 
 export enum TransactionStatus {
@@ -14,6 +15,9 @@ export enum TransactionStatus {
   SUCCESS = "SUCCESS",
   FAILED = "FAILED",
   REVERSED = "REVERSED",
+  PAID = "PAID",
+  UNPAID = "UNPAID",
+  REFUNDED = "REFUNDED",
 }
 
 export enum TransactionEntry {

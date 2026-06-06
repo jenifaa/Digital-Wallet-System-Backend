@@ -4,12 +4,12 @@ import AppError from "../../errorHelpers/AppError";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { walletSearchableFields } from "./wallet.constant";
 import { Wallet } from "./wallet.model";
-
 import httpStatus from "http-status-codes";
-import { User } from "../user/user.model";
+import { WalletStatus } from "./wallet.interface";
 import jwt from "jsonwebtoken";
 import { envVars } from "../../config/env";
-import { sendEmail } from "../../utils/sendEmail";
+import { emailService } from "../../utils/emailService";
+import { User } from '../user/user.model';
 
 const getMyWallet = async (userId: string) => {
   const wallet = await Wallet.findOne({ user: userId });
@@ -40,19 +40,23 @@ const getAllWallets = async (query: Record<string, string>) => {
 const blockWallet = async (walletId: string) => {
   const existingWallet = await Wallet.findById(walletId);
   if (!existingWallet) {
-    throw new Error("Wallet not found.");
+    throw new AppError(httpStatus.NOT_FOUND, "Wallet not found.");
   }
   return await Wallet.findByIdAndUpdate(
     walletId,
-    { isBlocked: true },
+    { status: WalletStatus.BLOCKED },
     { new: true },
   );
 };
 
 const unblockWallet = async (walletId: string) => {
+  const existingWallet = await Wallet.findById(walletId);
+  if (!existingWallet) {
+    throw new AppError(httpStatus.NOT_FOUND, "Wallet not found.");
+  }
   return await Wallet.findByIdAndUpdate(
     walletId,
-    { isBlocked: false },
+    { status: WalletStatus.ACTIVE },
     { new: true },
   );
 };
@@ -110,15 +114,7 @@ const forgetPin = async (email: string) => {
 
   const resetUILink = `${envVars.FRONTEND_URL}/reset-pin?id=${user._id}&token=${resetToken}`;
 
-  await sendEmail({
-    to: user.email,
-    subject: "Wallet PIN reset",
-    templateName: "forgetPin",
-    templateData: {
-      name: user.name,
-      resetUILink,
-    },
-  });
+  await emailService.sendPinReset(user.email, user.name, resetUILink);
 
   return { message: "Email sent successfully" };
 };

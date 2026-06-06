@@ -60,3 +60,10 @@ export const updateUserZodSchema = z.object({
     .min(5, { message: "Address must be at least 5 characters long" })
     .optional(),
 });
+export const updateUserProfileZodSchema = z.object({
+  picture: z.string().optional(),
+});
+
+export const rejectAgentSchema = z.object({
+  reason: z.string().optional(),
+});

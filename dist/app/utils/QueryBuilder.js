@@ -13,6 +13,7 @@ exports.QueryBuilder = void 0;
 const global_constant_1 = require("../global.constant");
 class QueryBuilder {
     constructor(modelQuery, query) {
+        this.filterQuery = {};
         this.modelQuery = modelQuery;
         this.query = query;
     }
@@ -21,11 +22,15 @@ class QueryBuilder {
         for (const field of global_constant_1.excludeField) {
             delete filter[field];
         }
+        this.filterQuery = filter;
         this.modelQuery = this.modelQuery.find(filter);
         return this;
     }
     search(searchableField) {
         const searchTerm = this.query.searchTerm || "";
+        if (!searchTerm) {
+            return this;
+        }
         const searchQuery = {
             $or: searchableField.map((field) => ({
                 [field]: { $regex: searchTerm, $options: "i" },
@@ -34,21 +39,53 @@ class QueryBuilder {
         this.modelQuery = this.modelQuery.find(searchQuery);
         return this;
     }
+    dateRange(field = "createdAt") {
+        const { startDate, endDate } = this.query;
+        if (!startDate && !endDate) {
+            return this;
+        }
+        const range = {};
+        if (startDate) {
+            range.$gte = new Date(startDate);
+        }
+        if (endDate) {
+            range.$lte = new Date(endDate);
+        }
+        this.modelQuery = this.modelQuery.find({ [field]: range });
+        return this;
+    }
+    amountRange(field = "amount") {
+        const { minAmount, maxAmount } = this.query;
+        if (!minAmount && !maxAmount) {
+            return this;
+        }
+        const range = {};
+        if (minAmount) {
+            range.$gte = Number(minAmount);
+        }
+        if (maxAmount) {
+            range.$lte = Number(maxAmount);
+        }
+        this.modelQuery = this.modelQuery.find({ [field]: range });
+        return this;
+    }
     sort() {
-        const sort = this.query.sort || "createdAt";
+        const sort = this.query.sort || "-createdAt";
         this.modelQuery = this.modelQuery.sort(sort);
         return this;
     }
     fields() {
         var _a;
         const fields = ((_a = this.query.fields) === null || _a === void 0 ? void 0 : _a.split(",").join(" ")) || "";
-        this.modelQuery = this.modelQuery.select(fields);
+        if (fields) {
+            this.modelQuery = this.modelQuery.select(fields);
+        }
         return this;
     }
     paginate() {
         const page = Number(this.query.page) || 1;
         const limit = Number(this.query.limit) || 10;
-        const skip = (page - 1) * 10;
+        const skip = (page - 1) * limit;
         this.modelQuery = this.modelQuery.skip(skip).limit(limit);
         return this;
     }
@@ -57,10 +94,15 @@ class QueryBuilder {
     }
     getMeta() {
         return __awaiter(this, void 0, void 0, function* () {
-            const totalDocuments = yield this.modelQuery.model.countDocuments();
+            const baseFilter = Object.assign({}, this.filterQuery);
+            if (this.query.searchTerm) {
+                // meta count should reflect search; rebuild search filter for count
+                // For simplicity, count on current filtered query without pagination
+            }
+            const totalDocuments = yield this.modelQuery.model.countDocuments(this.modelQuery.getFilter());
             const page = Number(this.query.page) || 1;
             const limit = Number(this.query.limit) || 10;
-            const totalPage = Math.ceil(totalDocuments / limit);
+            const totalPage = Math.ceil(totalDocuments / limit) || 1;
             return {
                 page,
                 limit,

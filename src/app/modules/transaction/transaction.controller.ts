@@ -5,8 +5,8 @@ import { transactionService } from "./transaction.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
-import { PaymentService } from "../payment/payment.service";
 import { envVars } from "../../config/env";
+import { SSLService } from "../sslCommerz/sslCommerz.service";
 
 const AddMoney = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -92,10 +92,9 @@ const Withdraw = catchAsync(
   },
 );
 
-// SSLCommerz redirects can be configured to hit /api/transaction/*
 const successCallback = catchAsync(async (req: Request, res: Response) => {
   const query = req.query as Record<string, string>;
-  const result = await PaymentService.successPayment(query);
+  const result = await transactionService.successPayment(query);
   res.redirect(
     `${envVars.SSL.SSL_SUCCESS_FRONTEND_URL}?transactionId=${query.transactionId || query.tran_id || query.tranId}&message=${result.message}&amount=${query.amount}&status=${query.status}`,
   );
@@ -103,7 +102,7 @@ const successCallback = catchAsync(async (req: Request, res: Response) => {
 
 const failCallback = catchAsync(async (req: Request, res: Response) => {
   const query = req.query as Record<string, string>;
-  const result = await PaymentService.failPayment(query);
+  const result = await transactionService.failPayment(query);
   res.redirect(
     `${envVars.SSL.SSL_FAIL_FRONTEND_URL}?transactionId=${query.transactionId || query.tran_id || query.tranId}&message=${result.message}&amount=${query.amount}&status=${query.status}`,
   );
@@ -111,8 +110,8 @@ const failCallback = catchAsync(async (req: Request, res: Response) => {
 
 const cancelCallback = catchAsync(async (req: Request, res: Response) => {
   const query = req.query as Record<string, string>;
-  const result = await PaymentService.cancelPayment(query);
-  res.redirect(`${envVars.SSL.SSL_CANCEL_FRONTEND_URL}`);
+  const result = await transactionService.cancelPayment(query);
+  res.redirect(`${envVars.SSL.SSL_CANCEL_FRONTEND_URL}?message=${result.message}`);
 });
 
 const GetMyTransactions = catchAsync(async (req: Request, res: Response) => {
@@ -120,13 +119,42 @@ const GetMyTransactions = catchAsync(async (req: Request, res: Response) => {
 
   const result = await transactionService.getMyTransactions(
     decodedToken.userId,
+    req.query as Record<string, string>,
   );
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: "Transactions retrieved successfully",
-    data: result,
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+const searchTransactions = catchAsync(async (req: Request, res: Response) => {
+  const result = await transactionService.searchTransactions(
+    req.query as Record<string, string>,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Transactions retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
+const validatePayment = catchAsync(async (req: Request, res: Response) => {
+  console.log("SSLCommerz ipn", req.body);
+
+  await SSLService.validatePayment(req.body);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Payment Validated  successfully",
+    data: null,
   });
 });
 
@@ -140,4 +168,6 @@ export const transactionController = {
   failCallback,
   cancelCallback,
   GetMyTransactions,
+  searchTransactions,
+  validatePayment,
 };

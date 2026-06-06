@@ -9,7 +9,7 @@ import { createNewAccessTokenWithRefreshToken, createUserToken } from '../../uti
 import { JwtPayload } from 'jsonwebtoken';
 import { envVars } from '../../config/env';
 import jwt from "jsonwebtoken"
-import { sendEmail } from '../../utils/sendEmail';
+import { emailService } from '../../utils/emailService';
 import { Wallet } from '../wallet/wallet.model';
 
 
@@ -170,15 +170,42 @@ const forgetPassword = async (email: string) => {
 
   const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`;
 
-  sendEmail({
-    to: isUserExist.email,
-    subject: " Password Reset",
-    templateName: "forgetPassword",
-    templateData: {
-      name: isUserExist.name,
-      resetUILink,
-    },
-  });
+  await emailService.sendPasswordReset(isUserExist.email, isUserExist.name, resetUILink);
+};
+
+const resetPasswordWithToken = async (payload: {
+  id: string;
+  token: string;
+  newPassword: string;
+}) => {
+  const { id, token, newPassword } = payload;
+
+  if (!id || !token || !newPassword) {
+    throw new AppError(httpStatus.BAD_REQUEST, "id, token and newPassword are required");
+  }
+
+  if (newPassword.length < 8) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Password must be at least 8 characters");
+  }
+
+  let decoded: JwtPayload;
+  try {
+    decoded = jwt.verify(token, envVars.JWT_ACCESS_SECRET) as JwtPayload;
+  } catch {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid or expired reset token");
+  }
+
+  if (String(decoded.userId) !== String(id)) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid reset token");
+  }
+
+  const user = await User.findById(id);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  user.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
+  await user.save();
 };
 
 
@@ -224,6 +251,7 @@ export const AuthServices = {
   changePassword,
   getNewAccessToken,
   resetPassword,
+  resetPasswordWithToken,
   setPassword,
   forgetPassword,
   setPhone

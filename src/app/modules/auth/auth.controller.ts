@@ -6,7 +6,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { createUserToken } from "../../utils/userTokens";
 import AppError from "../../errorHelpers/AppError";
-import { setAuthCookie } from "../../utils/setCookie";
+import { clearAuthCookies, setAuthCookie } from "../../utils/setCookie";
 import passport from "passport";
 import { AuthServices } from "./auth.service";
 import { JwtPayload } from "jsonwebtoken";
@@ -110,6 +110,19 @@ const getNewAccessToken = catchAsync(
     });
   },
 );
+const resetPasswordWithToken = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    await AuthServices.resetPasswordWithToken(req.body);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Password Reset Successfully",
+      data: null,
+    });
+  },
+);
+
 const resetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const decodedToken = req.user;
@@ -184,8 +197,6 @@ const googleCallbackController = catchAsync(
 
     const user = req.user as IUser & Document;
 
-    console.log("USER FROM PASSPORT:", JSON.stringify(user)); 
-
     if (!user) {
       throw new AppError(httpStatus.NOT_FOUND, "User not found");
     }
@@ -243,6 +254,7 @@ export const AuthControllers = {
   getNewAccessToken,
   changePassword,
   resetPassword,
+  resetPasswordWithToken,
   setPassword,
   forgetPassword,
   googleCallbackController,

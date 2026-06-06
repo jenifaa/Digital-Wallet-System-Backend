@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AuditAction = void 0;
+var AuditAction;
+(function (AuditAction) {
+    AuditAction["USER_BLOCK"] = "USER_BLOCK";
+    AuditAction["USER_UNBLOCK"] = "USER_UNBLOCK";
+    AuditAction["WALLET_BLOCK"] = "WALLET_BLOCK";
+    AuditAction["WALLET_UNBLOCK"] = "WALLET_UNBLOCK";
+    AuditAction["LOAN_APPROVE"] = "LOAN_APPROVE";
+    AuditAction["LOAN_REJECT"] = "LOAN_REJECT";
+    AuditAction["LOAN_REPAY"] = "LOAN_REPAY";
+    AuditAction["AGENT_APPROVE"] = "AGENT_APPROVE";
+    AuditAction["AGENT_REJECT"] = "AGENT_REJECT";
+    AuditAction["AGENT_SUSPEND"] = "AGENT_SUSPEND";
+    AuditAction["AGENT_REACTIVATE"] = "AGENT_REACTIVATE";
+    AuditAction["SETTINGS_UPDATE"] = "SETTINGS_UPDATE";
+    AuditAction["NOTIFICATION_SEND"] = "NOTIFICATION_SEND";
+    AuditAction["TRANSACTION"] = "TRANSACTION";
+    AuditAction["LOGIN"] = "LOGIN";
+})(AuditAction || (exports.AuditAction = AuditAction = {}));

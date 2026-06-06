@@ -40,18 +40,48 @@ const getTransactionStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter
         data: stats,
     });
 }));
-const getPaymentStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const stats = yield stats_service_1.StatsService.getPaymentStats();
+const getLoanStats = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const stats = yield stats_service_1.StatsService.getLoanStats();
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: 200,
         success: true,
-        message: "Payment stats fetched successfully",
+        message: "Loan stats fetched successfully",
+        data: stats,
+    });
+}));
+const getDashboardOverview = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const stats = yield stats_service_1.StatsService.getDashboardOverview();
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Dashboard overview fetched successfully",
+        data: stats,
+    });
+}));
+const getUserGrowthAnalytics = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const stats = yield stats_service_1.StatsService.getUserGrowthAnalytics();
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: 200,
+        success: true,
+        message: "User growth analytics fetched successfully",
+        data: stats,
+    });
+}));
+const getTransactionGrowthAnalytics = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const stats = yield stats_service_1.StatsService.getTransactionGrowthAnalytics();
+    (0, sendResponse_1.sendResponse)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Transaction growth analytics fetched successfully",
         data: stats,
     });
 }));
 exports.StatsController = {
     getWalletStats,
-    getPaymentStats,
+    getLoanStats,
     getUserStats,
     getTransactionStats,
+    getDashboardOverview,
+    getUserGrowthAnalytics,
+    getTransactionGrowthAnalytics,
 };

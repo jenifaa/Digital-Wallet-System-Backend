@@ -33,12 +33,13 @@ const sendOTP = (email, name) => __awaiter(void 0, void 0, void 0, function* () 
     }
     const otp = generateOtp();
     const redisKey = `otp:${email}`;
-    yield redis_config_1.redisClient.set(redisKey, otp, {
-        expiration: {
-            type: "EX",
-            value: OTP_EXPIRATION,
-        },
-    });
+    // await redisClient.set(redisKey, otp, {
+    //   expiration: {
+    //     type: "EX",
+    //     value: OTP_EXPIRATION,
+    //   },
+    // });
+    yield redis_config_1.redisClient.set(redisKey, otp, { ex: OTP_EXPIRATION });
     yield (0, sendEmail_1.sendEmail)({
         to: email,
         subject: "Your OTP Code",
@@ -68,7 +69,7 @@ const verifyOTP = (email, otp) => __awaiter(void 0, void 0, void 0, function* ()
     }
     yield Promise.all([
         user_model_1.User.updateOne({ email }, { isVerified: true }, { runValidators: true }),
-        redis_config_1.redisClient.del([redisKey]),
+        redis_config_1.redisClient.del(redisKey), // ✅ single string, not array
     ]);
 });
 exports.OTPService = {

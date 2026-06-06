@@ -23,22 +23,26 @@ const transaction_model_1 = require("./transaction.model");
 const sslCommerz_service_1 = require("../sslCommerz/sslCommerz.service");
 const wallet_model_1 = require("../wallet/wallet.model");
 const env_1 = require("../../config/env");
-const user_interface_1 = require("../user/user.interface");
 const mongoose_1 = require("mongoose");
+const user_interface_1 = require("../user/user.interface");
+const statusValidation_1 = require("../../helpers/statusValidation");
+const settings_service_1 = require("../settings/settings.service");
+const QueryBuilder_1 = require("../../utils/QueryBuilder");
 const getTransactionId = () => {
     return `trans_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 };
-const calculateFee = (amount) => {
+const calculateFee = (amount_1, ...args_1) => __awaiter(void 0, [amount_1, ...args_1], void 0, function* (amount, type = "transaction") {
     if (!amount || amount <= 0)
         return 0;
-    // Project requirement per your latest message: fee should be 5 (even for 350)
-    return 5;
-};
+    const settings = yield settings_service_1.SettingsService.getSettings();
+    return type === "cashout" ? settings.cashOutFee : settings.transactionFee;
+});
 const addMoney = (payload, userId) => __awaiter(void 0, void 0, void 0, function* () {
     const transactionId = getTransactionId();
     const session = yield transaction_model_1.Transaction.startSession();
     session.startTransaction();
     try {
+        yield (0, statusValidation_1.validateUserAndWalletForTransaction)(userId);
         const user = yield user_model_1.User.findById(userId);
         if (!user) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
@@ -46,7 +50,7 @@ const addMoney = (payload, userId) => __awaiter(void 0, void 0, void 0, function
         if (!user.phone) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Please update your profile first");
         }
-        const fee = calculateFee(payload.amount);
+        const fee = yield calculateFee(payload.amount);
         const totalPayable = payload.amount + fee;
         const transaction = yield transaction_model_1.Transaction.create([
             {
@@ -101,26 +105,48 @@ const sendMoney = (payload, userId) => __awaiter(void 0, void 0, void 0, functio
     const session = yield transaction_model_1.Transaction.startSession();
     session.startTransaction();
     try {
-        const senderUser = yield user_model_1.User.findById(userId).select("_id");
+        yield (0, statusValidation_1.validateUserAndWalletForTransaction)(userId);
+        const senderUser = yield user_model_1.User.findById(userId).select("_id phone isActive isDeleted");
         if (!senderUser) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
         }
         if (!payload.receiver) {
-            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Receiver is required");
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Receiver phone is required");
         }
         const receiverUser = yield user_model_1.User.findOne({
             phone: payload.receiver,
-        }).select("_id phone");
+        }).select("_id phone isActive isDeleted");
         if (!receiverUser) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Receiver not found");
         }
+        if (String(senderUser._id) === String(receiverUser._id)) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Cannot send money to yourself");
+        }
+        (0, statusValidation_1.assertUserCanTransact)(receiverUser);
+        const receiverWallet = yield wallet_model_1.Wallet.findOne({ user: receiverUser._id }).select("status isDeleted");
+        if (!receiverWallet) {
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Receiver wallet not found");
+        }
+        (0, statusValidation_1.assertWalletCanTransact)(receiverWallet, "receive");
+        const settings = yield settings_service_1.SettingsService.getSettings();
         const amount = Number(payload.amount || 0);
         if (!amount || amount < 1) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Invalid amount");
         }
-        const fee = calculateFee(amount);
+        if (amount > settings.sendMoneyLimit) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, `Amount exceeds send limit of ${settings.sendMoneyLimit}`);
+        }
+        const fee = yield calculateFee(amount);
         const totalDebit = amount + fee;
-        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: senderUser._id, balance: { $gte: totalDebit } }, {
+        const senderWallet = yield wallet_model_1.Wallet.findOne({ user: senderUser._id }).session(session);
+        if (!senderWallet) {
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Sender wallet not found");
+        }
+        (0, statusValidation_1.assertWalletCanTransact)(senderWallet, "send");
+        if (senderWallet.balance - totalDebit < settings.minimumWalletBalance) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, `Insufficient balance. Minimum wallet balance of ${settings.minimumWalletBalance} must be maintained`);
+        }
+        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: senderUser._id, balance: { $gte: totalDebit + settings.minimumWalletBalance } }, {
             $inc: { balance: -totalDebit },
             $set: { lastTransactionAt: new Date() },
         }, { session });
@@ -176,6 +202,16 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
     const session = yield transaction_model_1.Transaction.startSession();
     session.startTransaction();
     try {
+        const agent = yield user_model_1.User.findById(agentId).select("_id role isAgentApproved agentStatus isActive isDeleted");
+        if (!agent)
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent not found");
+        (0, statusValidation_1.assertUserCanTransact)(agent);
+        (0, statusValidation_1.assertAgentCanOperate)(agent);
+        const agentWallet = yield wallet_model_1.Wallet.findOne({ user: agentId }).select("status isDeleted balance");
+        if (!agentWallet) {
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent wallet not found");
+        }
+        (0, statusValidation_1.assertWalletCanTransact)(agentWallet, "send");
         const amount = Number(payload.amount || 0);
         if (!amount || amount < 1) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Invalid amount");
@@ -183,16 +219,19 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
         if (!payload.receiver) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "receiver required");
         }
-        const agent = yield user_model_1.User.findById(agentId).select("_id");
-        const user = yield user_model_1.User.findById(payload.receiver).select("_id");
-        if (!agent)
-            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent not found");
+        const user = yield user_model_1.User.findById(payload.receiver).select("_id isActive isDeleted");
         if (!user)
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
-        const fee = 0;
-        const commission = Math.round((amount * transaction_interface_1.AGENT_COMMISSION_PERCENT) / 100);
-        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: agent._id, balance: { $gte: amount + fee } }, {
-            $inc: { balance: -(amount + fee) },
+        (0, statusValidation_1.assertUserCanTransact)(user);
+        const userWallet = yield wallet_model_1.Wallet.findOne({ user: user._id }).select("status isDeleted");
+        if (!userWallet) {
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User wallet not found");
+        }
+        (0, statusValidation_1.assertWalletCanTransact)(userWallet, "receive");
+        const settings = yield settings_service_1.SettingsService.getSettings();
+        const commission = Math.round((amount * settings.agentCommissionPercent) / 100);
+        const debitRes = yield wallet_model_1.Wallet.updateOne({ user: agent._id, balance: { $gte: amount } }, {
+            $inc: { balance: -amount },
             $set: { lastTransactionAt: new Date() },
         }, { session });
         if (debitRes.matchedCount === 0) {
@@ -212,7 +251,8 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
                 sender: agent._id,
                 receiver: user.phone,
                 amount,
-                fee,
+                fee: 0,
+                commission,
                 type: transaction_interface_1.TransactionType.CASH_IN,
                 entry: transaction_interface_1.TransactionEntry.DEBIT,
                 referenceId,
@@ -407,46 +447,40 @@ const cashOut = (payload, userId) => __awaiter(void 0, void 0, void 0, function*
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Agent is required");
         }
         // find user
+        yield (0, statusValidation_1.validateUserAndWalletForTransaction)(userId);
         const user = yield user_model_1.User.findById(userId).select("_id");
         if (!user) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
         }
-        /**
-         * IMPORTANT FIX
-         *
-         * if frontend sends phone number:
-         *   01700000001
-         *
-         * mongoose crashes if you do:
-         *   { _id: "01700000001" }
-         *
-         * so first check if it's a valid ObjectId
-         */
         let agent;
         if (mongoose_1.Types.ObjectId.isValid(payload.agent)) {
-            // search by ID
-            agent = yield user_model_1.User.findById(payload.agent).select("_id phone role");
+            agent = yield user_model_1.User.findById(payload.agent).select("_id phone role isAgentApproved agentStatus isActive isDeleted");
         }
         else {
-            // search by phone
             agent = yield user_model_1.User.findOne({
                 phone: payload.agent,
-            }).select("_id phone role");
+            }).select("_id phone role isAgentApproved agentStatus isActive isDeleted");
         }
         if (!agent) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Agent not found");
+        }
+        if (String(user._id) === String(agent._id)) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "You cannot cash out to yourself");
         }
         // optional role check
         if (agent.role !== user_interface_1.Role.AGENT) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Selected user is not an agent");
         }
-        // prevent self cashout
-        if (String(user._id) === String(agent._id)) {
-            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "You cannot cash out to yourself");
+        (0, statusValidation_1.assertAgentCanOperate)(agent);
+        (0, statusValidation_1.assertUserCanTransact)(agent);
+        const agentWallet = yield wallet_model_1.Wallet.findOne({ user: agent._id }).select("status isDeleted");
+        if (agentWallet) {
+            (0, statusValidation_1.assertWalletCanTransact)(agentWallet, "receive");
         }
+        const settings = yield settings_service_1.SettingsService.getSettings();
         // fee + commission
-        const fee = calculateFee(amount);
-        const commission = Math.round((amount * transaction_interface_1.AGENT_COMMISSION_PERCENT) / 100);
+        const fee = yield calculateFee(amount, "cashout");
+        const commission = Math.round((amount * settings.agentCommissionPercent) / 100);
         const totalDebit = amount + fee;
         // debit user wallet
         const debitRes = yield wallet_model_1.Wallet.updateOne({
@@ -547,15 +581,20 @@ const withdraw = (payload, userId) => __awaiter(void 0, void 0, void 0, function
     const session = yield transaction_model_1.Transaction.startSession();
     session.startTransaction();
     try {
+        yield (0, statusValidation_1.validateUserAndWalletForTransaction)(userId);
         const user = yield user_model_1.User.findById(userId).select("_id");
         if (!user) {
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
         }
+        const settings = yield settings_service_1.SettingsService.getSettings();
         const amount = Number(payload.amount || 0);
         if (!amount || amount < 1) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Invalid amount");
         }
-        const fee = calculateFee(amount);
+        if (amount > settings.withdrawLimit) {
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, `Amount exceeds withdraw limit of ${settings.withdrawLimit}`);
+        }
+        const fee = yield calculateFee(amount);
         const totalDebit = amount + fee;
         const debitRes = yield wallet_model_1.Wallet.updateOne({ user: user._id, balance: { $gte: totalDebit } }, {
             $inc: { balance: -totalDebit },
@@ -592,17 +631,119 @@ const withdraw = (payload, userId) => __awaiter(void 0, void 0, void 0, function
         throw error;
     }
 });
-const getMyTransactions = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const transactions = yield transaction_model_1.Transaction.find({
-        $or: [
-            { sender: userId },
-            { receiver: userId },
-        ],
-    })
+const getMyTransactions = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, ...args_1], void 0, function* (userId, query = {}) {
+    const filter = {
+        $or: [{ sender: userId }, { receiver: userId }],
+    };
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(transaction_model_1.Transaction.find(filter)
         .populate("sender", "name email phone")
-        .populate("receiver", "name email phone")
-        .sort({ createdAt: -1 });
-    return transactions;
+        .populate("receiver", "name email phone"), query);
+    const transactions = queryBuilder
+        .filter()
+        .dateRange()
+        .amountRange()
+        .sort()
+        .paginate();
+    const [data, meta] = yield Promise.all([
+        transactions.build(),
+        queryBuilder.getMeta(),
+    ]);
+    return { data, meta };
+});
+const searchTransactions = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    const filter = {};
+    if (query.user) {
+        filter.$or = [{ sender: query.user }, { receiver: query.user }];
+    }
+    if (query.type) {
+        filter.type = query.type;
+    }
+    if (query.status) {
+        filter.status = query.status;
+    }
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(transaction_model_1.Transaction.find(filter)
+        .populate("sender", "name email phone")
+        .populate("receiver", "name email phone"), query);
+    const transactions = queryBuilder
+        .search(["transactionId", "referenceId"])
+        .dateRange()
+        .amountRange()
+        .sort()
+        .paginate();
+    const [data, meta] = yield Promise.all([
+        transactions.build(),
+        queryBuilder.getMeta(),
+    ]);
+    return { data, meta };
+});
+const processGatewayCallback = (args) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!args.transactionId) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Invalid transaction reference");
+    }
+    const session = yield transaction_model_1.Transaction.startSession();
+    session.startTransaction();
+    try {
+        const trx = yield transaction_model_1.Transaction.findOne({ transactionId: args.transactionId }).session(session);
+        if (!trx) {
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Transaction not found");
+        }
+        if (trx.status !== transaction_interface_1.TransactionStatus.PENDING) {
+            yield session.commitTransaction();
+            session.endSession();
+            return {
+                success: trx.status === transaction_interface_1.TransactionStatus.SUCCESS,
+                message: "Callback already processed",
+            };
+        }
+        if (args.status === "success") {
+            const updated = yield transaction_model_1.Transaction.findOneAndUpdate({ transactionId: args.transactionId, status: transaction_interface_1.TransactionStatus.PENDING }, { status: transaction_interface_1.TransactionStatus.SUCCESS, processedAt: new Date() }, { new: true, runValidators: true, session });
+            if (!updated) {
+                yield session.commitTransaction();
+                session.endSession();
+                return { success: true, message: "Callback already processed" };
+            }
+            if (updated.type !== transaction_interface_1.TransactionType.ADD) {
+                throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Unsupported payment transaction type");
+            }
+            const walletRes = yield wallet_model_1.Wallet.updateOne({ user: updated.sender }, { $inc: { balance: updated.amount }, $set: { lastTransactionAt: new Date() } }, { session });
+            if (walletRes.matchedCount === 0) {
+                throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User wallet not found");
+            }
+            const fee = updated.fee || 0;
+            if (fee > 0) {
+                const adminWalletId = yield getSystemAdminWalletId(session);
+                yield wallet_model_1.Wallet.updateOne({ _id: adminWalletId }, { $inc: { balance: fee }, $set: { lastTransactionAt: new Date() } }, { session });
+            }
+            yield session.commitTransaction();
+            session.endSession();
+            return { success: true, message: "Transaction Completed Successfully" };
+        }
+        const nextStatus = args.status === "fail" ? transaction_interface_1.TransactionStatus.FAILED : transaction_interface_1.TransactionStatus.REVERSED;
+        yield transaction_model_1.Transaction.findOneAndUpdate({ transactionId: args.transactionId, status: transaction_interface_1.TransactionStatus.PENDING }, { status: nextStatus, processedAt: new Date() }, { new: true, runValidators: true, session });
+        yield session.commitTransaction();
+        session.endSession();
+        return {
+            success: false,
+            message: args.status === "fail" ? "Payment Failed" : "Payment Cancelled",
+        };
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        session.endSession();
+        throw error;
+    }
+});
+const successPayment = (query) => processGatewayCallback({
+    transactionId: query.transactionId || query.tran_id || query.tranId,
+    status: "success",
+});
+const failPayment = (query) => processGatewayCallback({
+    transactionId: query.transactionId || query.tran_id || query.tranId,
+    status: "fail",
+});
+const cancelPayment = (query) => processGatewayCallback({
+    transactionId: query.transactionId || query.tran_id || query.tranId,
+    status: "cancel",
 });
 exports.transactionService = {
     addMoney,
@@ -610,5 +751,9 @@ exports.transactionService = {
     sendMoney,
     cashIn,
     cashOut,
-    getMyTransactions
+    getMyTransactions,
+    searchTransactions,
+    successPayment,
+    failPayment,
+    cancelPayment,
 };

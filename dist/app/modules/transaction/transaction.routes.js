@@ -11,6 +11,7 @@ const checkAuth_1 = require("../../middlewares/checkAuth");
 const user_interface_1 = require("../user/user.interface");
 const transaction_controller_1 = require("./transaction.controller");
 const requireWalletPin_1 = require("../../middlewares/requireWalletPin");
+const rateLimiter_1 = require("../../middlewares/rateLimiter");
 const router = express_1.default.Router();
 // SSLCommerz callback compatibility (some envs point to /api/transaction/*)
 router.get("/success", transaction_controller_1.transactionController.successCallback);
@@ -19,12 +20,14 @@ router.get("/fail", transaction_controller_1.transactionController.failCallback)
 router.post("/fail", transaction_controller_1.transactionController.failCallback);
 router.get("/cancel", transaction_controller_1.transactionController.cancelCallback);
 router.post("/cancel", transaction_controller_1.transactionController.cancelCallback);
-router.post("/add-money", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.addMoneySchema), transaction_controller_1.transactionController.AddMoney);
+router.post("/add-money", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), rateLimiter_1.transactionRateLimiter, requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.addMoneySchema), transaction_controller_1.transactionController.AddMoney);
 router.post("/withdraw", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.withdrawSchema), transaction_controller_1.transactionController.Withdraw);
-router.post("/send-money", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.sendMoneySchema), transaction_controller_1.transactionController.SendMoney);
+router.post("/send-money", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), rateLimiter_1.transactionRateLimiter, requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.sendMoneySchema), transaction_controller_1.transactionController.SendMoney);
 // Cash In (Agent → User)
 router.post("/cash-in", (0, checkAuth_1.checkAuth)(user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.cashInSchema), transaction_controller_1.transactionController.CashIn);
 // Cash Out (Agent → User)
 router.post("/cash-out", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), requireWalletPin_1.requireWalletPin, (0, validateRequest_1.validateRequest)(transaction_validation_1.cashOutSchema), transaction_controller_1.transactionController.CashOut);
+router.post("/validate-payment", transaction_controller_1.transactionController.validatePayment);
+router.get("/search", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), transaction_controller_1.transactionController.searchTransactions);
 router.get("/my-transactions", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), transaction_controller_1.transactionController.GetMyTransactions);
 exports.TransactionRoutes = router;

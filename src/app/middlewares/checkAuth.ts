@@ -12,9 +12,13 @@ export const checkAuth =
   (...authRoles: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const accessToken = req.headers.authorization || req.cookies.accessToken;
+      let accessToken = req.headers.authorization || req.cookies.accessToken;
       if (!accessToken) {
         throw new AppError(403, "NO token received");
+      }
+
+      if (typeof accessToken === "string" && accessToken.startsWith("Bearer ")) {
+        accessToken = accessToken.slice(7);
       }
 
       const verifiedToken = verifyToken(

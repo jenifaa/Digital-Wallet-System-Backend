@@ -12,6 +12,7 @@ const getUserStats = catchAsync(async (req: Request, res: Response) => {
     data: stats,
   });
 });
+
 const getWalletStats = catchAsync(async (req: Request, res: Response) => {
   const stats = await StatsService.getWalletStats();
   sendResponse(res, {
@@ -21,6 +22,7 @@ const getWalletStats = catchAsync(async (req: Request, res: Response) => {
     data: stats,
   });
 });
+
 const getTransactionStats = catchAsync(async (req: Request, res: Response) => {
   const stats = await StatsService.getTransactionStats();
   sendResponse(res, {
@@ -30,19 +32,53 @@ const getTransactionStats = catchAsync(async (req: Request, res: Response) => {
     data: stats,
   });
 });
-const getPaymentStats = catchAsync(async (req: Request, res: Response) => {
-  const stats = await StatsService.getPaymentStats();
+
+const getLoanStats = catchAsync(async (req: Request, res: Response) => {
+  const stats = await StatsService.getLoanStats();
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "Payment stats fetched successfully",
+    message: "Loan stats fetched successfully",
+    data: stats,
+  });
+});
+
+const getDashboardOverview = catchAsync(async (req: Request, res: Response) => {
+  const stats = await StatsService.getDashboardOverview();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Dashboard overview fetched successfully",
+    data: stats,
+  });
+});
+
+const getUserGrowthAnalytics = catchAsync(async (req: Request, res: Response) => {
+  const stats = await StatsService.getUserGrowthAnalytics();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User growth analytics fetched successfully",
+    data: stats,
+  });
+});
+
+const getTransactionGrowthAnalytics = catchAsync(async (req: Request, res: Response) => {
+  const stats = await StatsService.getTransactionGrowthAnalytics();
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Transaction growth analytics fetched successfully",
     data: stats,
   });
 });
 
 export const StatsController = {
   getWalletStats,
-  getPaymentStats,
+  getLoanStats,
   getUserStats,
   getTransactionStats,
+  getDashboardOverview,
+  getUserGrowthAnalytics,
+  getTransactionGrowthAnalytics,
 };

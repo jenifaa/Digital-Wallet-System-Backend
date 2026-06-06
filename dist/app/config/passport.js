@@ -67,20 +67,20 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
         if (!email) {
             return done(null, false, { message: "No email found" });
         }
-        let isUserExist = yield user_model_1.User.findOne({ email });
-        if (isUserExist && !isUserExist.isVerified) {
+        let user = yield user_model_1.User.findOne({ email });
+        if (user && !user.isVerified) {
             return done(null, false, { message: "User is not verified" });
         }
-        if (isUserExist &&
-            (isUserExist.isActive === user_interface_1.IsActive.BLOCKED ||
-                isUserExist.isActive === user_interface_1.IsActive.INACTIVE)) {
-            return done(`User is ${isUserExist.isActive}`);
+        if (user &&
+            (user.isActive === user_interface_1.IsActive.BLOCKED ||
+                user.isActive === user_interface_1.IsActive.INACTIVE)) {
+            return done(`User is ${user.isActive}`);
         }
-        if (isUserExist && isUserExist.isDeleted) {
+        if (user && user.isDeleted) {
             return done(null, false, { message: "User is deleted" });
         }
-        if (!isUserExist) {
-            isUserExist = yield user_model_1.User.create({
+        if (!user) {
+            user = yield user_model_1.User.create({
                 email,
                 name: profile.displayName,
                 picture: (_b = profile.photos) === null || _b === void 0 ? void 0 : _b[0].value,
@@ -111,7 +111,7 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
         //     ],
         //   });
         // }
-        return done(null, isUserExist);
+        return done(null, user);
     }
     catch (error) {
         console.log("Google strategy error", error);

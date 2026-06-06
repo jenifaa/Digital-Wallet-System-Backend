@@ -1,5 +1,12 @@
 import { model, Schema } from "mongoose";
-import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
+import {
+  AgentStatus,
+  IAgentStatusHistory,
+  IAuthProvider,
+  IsActive,
+  IUser,
+  Role,
+} from "./user.interface";
 
 const authProviderSchema = new Schema<IAuthProvider>(
   {
@@ -23,6 +30,18 @@ const userSchema = new Schema<IUser>(
     address: { type: String },
     isDeleted: { type: Boolean, default: false },
     isAgentApproved: { type: Boolean, default: false },
+    agentStatus: {
+      type: String,
+      enum: Object.values(AgentStatus),
+    },
+    agentStatusHistory: [
+      {
+        status: { type: String, enum: Object.values(AgentStatus), required: true },
+        changedBy: { type: Schema.Types.ObjectId, ref: "User" },
+        reason: { type: String },
+        changedAt: { type: Date, default: Date.now },
+      },
+    ] as unknown as IAgentStatusHistory[],
     isActive: {
       type: String,
       enum: Object.values(IsActive),

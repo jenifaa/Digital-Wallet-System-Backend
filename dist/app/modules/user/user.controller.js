@@ -41,12 +41,26 @@ const getAllUsers = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(v
 const updateUser = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.id;
     const verifiedToken = req.user;
-    const payload = req.body;
+    const payload = Object.assign({}, req.body);
+    // const payload = { ...req.body, picture: req.file?.path };
     const user = yield user_service_1.UserServices.updateUser(userId, payload, verifiedToken);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.CREATED,
         message: "Users updated Successfully",
+        data: user,
+    });
+}));
+const updateUserProfile = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    // const userId = req.params.id;
+    var _a;
+    const verifiedToken = req.user;
+    const payload = { picture: (_a = req.file) === null || _a === void 0 ? void 0 : _a.path };
+    const user = yield user_service_1.UserServices.updateUserProfile(payload, verifiedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "User profile updated Successfully",
         data: user,
     });
 }));
@@ -87,17 +101,87 @@ const approveAgent = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(
     const result = yield user_service_1.UserServices.approveAgent(userId, decodedToken);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
-        statusCode: http_status_codes_1.default.CREATED,
-        message: "Role updated to agent verified Successfully",
+        statusCode: http_status_codes_1.default.OK,
+        message: "Agent approved successfully",
         data: result,
+    });
+}));
+const applyForAgent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const result = yield user_service_1.UserServices.applyForAgent(decodedToken.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.CREATED,
+        message: "Agent application submitted successfully",
+        data: result,
+    });
+}));
+const rejectAgent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.id;
+    const decodedToken = req.user;
+    const result = yield user_service_1.UserServices.rejectAgent(String(userId), decodedToken, req.body.reason);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Agent rejected successfully",
+        data: result,
+    });
+}));
+const suspendAgent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.id;
+    const decodedToken = req.user;
+    const result = yield user_service_1.UserServices.suspendAgent(String(userId), decodedToken, req.body.reason);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Agent suspended successfully",
+        data: result,
+    });
+}));
+const reactivateAgent = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.id;
+    const decodedToken = req.user;
+    const result = yield user_service_1.UserServices.reactivateAgent(String(userId), decodedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Agent reactivated successfully",
+        data: result,
+    });
+}));
+const searchUsers = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserServices.searchUsers(req.query);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Users retrieved successfully",
+        data: result.data,
+        meta: result.meta,
+    });
+}));
+const searchAgents = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserServices.searchAgents(req.query);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Agents retrieved successfully",
+        data: result.data,
+        meta: result.meta,
     });
 }));
 exports.userControllers = {
     createUser,
     getAllUsers,
+    searchUsers,
+    searchAgents,
     getMe,
     updateUser,
     getSingleUser,
     makeAgent,
+    applyForAgent,
     approveAgent,
+    rejectAgent,
+    suspendAgent,
+    reactivateAgent,
+    updateUserProfile,
 };

@@ -7,6 +7,7 @@ import { envVars } from "./app/config/env";
 import app from "./app";
 import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 import { connectRedis } from "./app/config/redis.config";
+import { SettingsService } from "./app/modules/settings/settings.service";
 
 let server: Server;
 let isConnected = false;
@@ -20,6 +21,7 @@ const initializeContext = async () => {
     }
     await connectRedis();
     await seedSuperAdmin();
+    await SettingsService.getSettings();
     isConnected = true;
     console.log("✅ App initialized successfully");
   } catch (error) {

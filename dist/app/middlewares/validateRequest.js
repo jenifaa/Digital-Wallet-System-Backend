@@ -11,12 +11,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateRequest = void 0;
 const validateRequest = (zodSchema) => (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
-        if (req.body.data) {
+        if ((_a = req.body) === null || _a === void 0 ? void 0 : _a.data) {
             req.body = JSON.parse(req.body.data);
         }
         // req.body = JSON.parse(req.body.data) || req.body
-        req.body = yield zodSchema.parseAsync(req.body);
+        req.body = yield zodSchema.parseAsync((_b = req.body) !== null && _b !== void 0 ? _b : {});
         next();
     }
     catch (error) {

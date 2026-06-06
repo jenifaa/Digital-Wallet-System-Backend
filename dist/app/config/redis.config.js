@@ -1,4 +1,6 @@
 "use strict";
+// import { createClient } from "redis";
+// import { envVars } from "./env";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,23 +12,28 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectRedis = exports.redisClient = void 0;
-const redis_1 = require("redis");
+// export const redisClient = createClient({
+//   username: envVars.REDIS_USERNAME,
+//   password: envVars.REDIS_PASSWORD,
+//   socket: {
+//     host: envVars.REDIS_HOST,
+//     port: Number(envVars.REDIS_PORT),
+//   },
+// });
+// redisClient.on("error", (err) => console.log("Redis Client Error", err));
+// export const connectRedis = async () => {
+//   if (!redisClient.isOpen) {
+//     await redisClient.connect();
+//   }
+// };
+const redis_1 = require("@upstash/redis");
 const env_1 = require("./env");
-exports.redisClient = (0, redis_1.createClient)({
-    username: env_1.envVars.REDIS_USERNAME,
-    password: env_1.envVars.REDIS_PASSWORD,
-    socket: {
-        host: env_1.envVars.REDIS_HOST,
-        port: Number(env_1.envVars.REDIS_PORT),
-    },
+exports.redisClient = new redis_1.Redis({
+    url: env_1.envVars.UPSTASH_REDIS_REST_URL,
+    token: env_1.envVars.UPSTASH_REDIS_REST_TOKEN,
 });
-exports.redisClient.on("error", (err) => console.log("Redis Client Error", err));
-// await client.set("foo", "bar");
-// const result = await client.get("foo");
-// console.log(result); // >>> bar
+// No connectRedis needed — Upstash uses HTTP, no persistent connection
 const connectRedis = () => __awaiter(void 0, void 0, void 0, function* () {
-    if (!exports.redisClient.isOpen) {
-        yield exports.redisClient.connect();
-    }
+    console.log("Upstash Redis ready ✅");
 });
 exports.connectRedis = connectRedis;
