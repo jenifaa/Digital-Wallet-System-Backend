@@ -33,7 +33,7 @@ const getMyWallet = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     return wallet;
 });
 const getAllWallets = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const queryBuilder = new QueryBuilder_1.QueryBuilder(wallet_model_1.Wallet.find(), query);
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(wallet_model_1.Wallet.find().populate("user", "name email"), query);
     const wallets = yield queryBuilder
         .search(wallet_constant_1.walletSearchableFields)
         .filter()

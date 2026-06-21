@@ -22,23 +22,36 @@ const audit_interface_1 = require("../audit/audit.interface");
 const audit_service_1 = require("../audit/audit.service");
 const sendToUser = (0, catchAsync_1.catchAsync)((req, res, _next) => __awaiter(void 0, void 0, void 0, function* () {
     const decoded = req.user;
-    const notification = yield notification_service_1.NotificationService.sendToUser({
-        title: req.body.title,
-        message: req.body.message,
-        recipient: req.body.recipient,
-        sender: decoded.userId,
-        type: req.body.type || notification_interface_1.NotificationType.ADMIN,
-    });
+    const { type, title, message, recipient, role } = req.body;
+    let result;
+    if (type === notification_interface_1.NotificationType.BROADCAST) {
+        result = yield notification_service_1.NotificationService.broadcast({
+            title,
+            message,
+            sender: decoded.userId,
+        }, role);
+    }
+    else {
+        result = yield notification_service_1.NotificationService.sendToUser({
+            title,
+            message,
+            recipient,
+            sender: decoded.userId,
+            type,
+        });
+    }
     yield audit_service_1.AuditService.logAudit(req, audit_interface_1.AuditAction.NOTIFICATION_SEND, {
         targetType: "User",
-        targetId: req.body.recipient,
+        targetId: recipient,
         performedBy: decoded.userId,
     });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: http_status_codes_1.default.CREATED,
-        message: "Notification sent successfully",
-        data: notification,
+        message: type === notification_interface_1.NotificationType.BROADCAST
+            ? "Broadcast sent successfully"
+            : "Notification sent successfully",
+        data: result,
     });
 }));
 const broadcast = (0, catchAsync_1.catchAsync)((req, res, _next) => __awaiter(void 0, void 0, void 0, function* () {

@@ -37,7 +37,6 @@ A production-ready, scalable RESTful API backend for a full-featured digital wal
 19. [Performance & Scalability](#performance--scalability)
 20. [Deployment](#deployment)
 21. [Contributing](#contributing)
-22. [License](#license)
 
 ---
 

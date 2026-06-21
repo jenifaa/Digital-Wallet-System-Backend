@@ -177,6 +177,16 @@ const repayLoan = (userId, loanId, amount) => __awaiter(void 0, void 0, void 0, 
         throw error;
     }
 });
+const getMyRepayments = (userId, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const queryBuilder = new QueryBuilder_1.QueryBuilder(transaction_model_1.Transaction.find({
+        sender: userId,
+        type: transaction_interface_1.TransactionType.WITHDRAW,
+        referenceId: { $regex: "_REPAY" },
+    }).sort({ createdAt: -1 }), query);
+    const repayments = queryBuilder.filter().sort().paginate();
+    const [data, meta] = yield Promise.all([repayments.build(), queryBuilder.getMeta()]);
+    return { data, meta };
+});
 exports.LoanService = {
     requestLoan,
     getMyLoans,
@@ -184,4 +194,5 @@ exports.LoanService = {
     approveLoan,
     rejectLoan,
     repayLoan,
+    getMyRepayments
 };

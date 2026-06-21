@@ -2,12 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notificationIdParamSchema = exports.broadcastNotificationSchema = exports.sendNotificationSchema = void 0;
 const zod_1 = require("zod");
-const notification_interface_1 = require("./notification.interface");
 exports.sendNotificationSchema = zod_1.z.object({
-    title: zod_1.z.string().min(1),
-    message: zod_1.z.string().min(1),
-    recipient: zod_1.z.string().min(1),
-    type: zod_1.z.nativeEnum(notification_interface_1.NotificationType).optional().default(notification_interface_1.NotificationType.ADMIN),
+    title: zod_1.z.string(),
+    message: zod_1.z.string(),
+    type: zod_1.z.enum(["ADMIN", "BROADCAST", "SYSTEM"]),
+    recipient: zod_1.z.string().optional(),
+    role: zod_1.z.string().optional(),
 });
 exports.broadcastNotificationSchema = zod_1.z.object({
     title: zod_1.z.string().min(1),

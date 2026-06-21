@@ -96,6 +96,17 @@ const repayLoan = (0, catchAsync_1.catchAsync)((req, res, _next) => __awaiter(vo
         data: loan,
     });
 }));
+const getMyRepayments = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decoded = req.user;
+    const result = yield loan_service_1.LoanService.getMyRepayments(decoded.userId, req.query);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Repayment history retrieved successfully",
+        data: result.data,
+        meta: result.meta,
+    });
+}));
 exports.LoanController = {
     requestLoan,
     getMyLoans,
@@ -103,4 +114,5 @@ exports.LoanController = {
     approveLoan,
     rejectLoan,
     repayLoan,
+    getMyRepayments
 };
