@@ -26,8 +26,13 @@ app.use((0, cookie_parser_1.default)());
 app.set("trust proxy", 1);
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({
-    origin: [env_1.envVars.FRONTEND_URL, env_1.envVars.FRONTEND_LIVE_URL],
+    origin: [
+        env_1.envVars.FRONTEND_URL,
+        "https://digital-wallet-system-frontend-jfvoarhgl-jenifaas-projects.vercel.app",
+        "https://digital-wallet-system-frontend-chi.vercel.app",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 }));
 app.use("/api", routes_1.router);
 app.get("/", (req, res) => {
