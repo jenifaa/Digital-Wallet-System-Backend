@@ -55,14 +55,15 @@ const verifyOTP = async (email: string, otp: string) => {
   }
   const redisKey = `otp:${email}`;
   const savedOtp = await redisClient.get(redisKey);
+
   if (!savedOtp) {
     throw new AppError(401, "Invalid OTP");
   }
-  if (savedOtp !== otp) {
+  if (Number(savedOtp) !== Number(otp)) {
     throw new AppError(401, "Invalid OTP");
   }
 
-    await Promise.all([
+  await Promise.all([
     User.updateOne({ email }, { isVerified: true }, { runValidators: true }),
     redisClient.del(redisKey), // ✅ single string, not array
   ]);

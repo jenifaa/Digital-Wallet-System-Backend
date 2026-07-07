@@ -106,7 +106,6 @@ const searchTransactions = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(
     });
 }));
 const validatePayment = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("SSLCommerz ipn", req.body);
     yield sslCommerz_service_1.SSLService.validatePayment(req.body);
     (0, sendResponse_1.sendResponse)(res, {
         statusCode: 200,

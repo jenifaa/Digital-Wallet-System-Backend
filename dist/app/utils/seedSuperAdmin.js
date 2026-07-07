@@ -50,7 +50,6 @@ const seedSuperAdmin = () => __awaiter(void 0, void 0, void 0, function* () {
         const wallet = yield wallet_model_1.Wallet.create({ user: superAdmin._id });
         superAdmin.wallet = wallet._id;
         yield superAdmin.save();
-        console.log(superAdmin);
     }
     catch (error) {
         console.log(error);

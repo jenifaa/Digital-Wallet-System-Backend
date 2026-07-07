@@ -26,7 +26,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: [envVars.FRONTEND_URL, envVars.FRONTEND_LIVE_URL, envVars.FRONTEND_LIVE_URL_TWO],
+    origin: [
+      envVars.FRONTEND_URL,
+      envVars.FRONTEND_LIVE_URL_TWO,
+     "https://walletiq-digital-wallet-system.vercel.app"
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   }),

@@ -146,7 +146,7 @@ const searchTransactions = catchAsync(async (req: Request, res: Response) => {
 });
 
 const validatePayment = catchAsync(async (req: Request, res: Response) => {
-  console.log("SSLCommerz ipn", req.body);
+
 
   await SSLService.validatePayment(req.body);
 

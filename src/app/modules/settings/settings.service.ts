@@ -1,5 +1,4 @@
-import httpStatus from "http-status-codes";
-import AppError from "../../errorHelpers/AppError";
+
 import { DEFAULT_SETTINGS, ISystemSettings } from "./settings.interface";
 import { SystemSettings } from "./settings.model";
 

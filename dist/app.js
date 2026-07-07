@@ -28,8 +28,8 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({
     origin: [
         env_1.envVars.FRONTEND_URL,
-        "https://digital-wallet-system-frontend-jfvoarhgl-jenifaas-projects.vercel.app",
-        "https://digital-wallet-system-frontend-chi.vercel.app",
+        env_1.envVars.FRONTEND_LIVE_URL_TWO,
+        "https://walletiq-digital-wallet-system.vercel.app"
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

@@ -43,7 +43,7 @@ export const seedSuperAdmin = async () => {
     const wallet = await Wallet.create({ user: superAdmin._id });
     superAdmin.wallet = wallet._id;
     await superAdmin.save();
-    console.log(superAdmin);
+
   } catch (error) {
     console.log(error);
   }

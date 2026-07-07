@@ -15,10 +15,9 @@ let isConnected = false;
 const initializeContext = async () => {
   if (isConnected) return;
   try {
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(envVars.DB_URL);
-      console.log("✅ Connected to MongoDB");
-    }
+    await mongoose.connect(envVars.DB_URL);
+    console.log("✅ Connected to MongoDB");
+
     await connectRedis();
     await seedSuperAdmin();
     await SettingsService.getSettings();

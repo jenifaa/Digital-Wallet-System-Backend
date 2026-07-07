@@ -70,7 +70,7 @@ const validatePayment = async (payload: any) => {
       url: `${envVars.SSL.SSL_VALIDATION_API}?val_id=${payload.val_id}&store_id=${envVars.SSL.STORE_ID}&store_passwd=${envVars.SSL.STORE_PASS}`,
     });
 
-    console.log("sslcommerz validate api response", response.data);
+  
 
     await Transaction.updateOne(
       { transactionId: payload.tran_id },

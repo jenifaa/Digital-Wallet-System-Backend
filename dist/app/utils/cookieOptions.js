@@ -1,8 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clearAuthCookieOptions = exports.refreshTokenCookieOptions = exports.accessTokenCookieOptions = void 0;
-const env_1 = require("../config/env");
-const isProduction = env_1.envVars.NODE_ENV === "production";
+// const isProduction = envVars.NODE_ENV === "production";
 exports.accessTokenCookieOptions = {
     httpOnly: true,
     secure: true,
