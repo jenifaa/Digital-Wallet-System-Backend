@@ -429,6 +429,37 @@ const reactivateAgent = async (userId: string, decodedToken: JwtPayload) => {
   return user;
 };
 
+
+const deleteUser = async (
+  userId: string,
+  decodedToken: JwtPayload
+) => {
+  if (
+    decodedToken.role !== Role.ADMIN &&
+    decodedToken.role !== Role.SUPER_ADMIN
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized"
+    );
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "User not found"
+    );
+  }
+
+  user.isDeleted = true;
+
+  await user.save();
+
+  return null;
+};
+
 export const UserServices = {
   createUser,
   getAllUsers,
@@ -444,4 +475,5 @@ export const UserServices = {
   rejectAgent,
   suspendAgent,
   reactivateAgent,
+  deleteUser
 };

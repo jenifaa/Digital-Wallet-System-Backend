@@ -25,10 +25,8 @@ const initializeContext = () => __awaiter(void 0, void 0, void 0, function* () {
     if (isConnected)
         return;
     try {
-        if (mongoose_1.default.connection.readyState !== 1) {
-            yield mongoose_1.default.connect(env_1.envVars.DB_URL);
-            console.log("✅ Connected to MongoDB");
-        }
+        yield mongoose_1.default.connect(env_1.envVars.DB_URL);
+        console.log("✅ Connected to MongoDB");
         yield (0, redis_config_1.connectRedis)();
         yield (0, seedSuperAdmin_1.seedSuperAdmin)();
         yield settings_service_1.SettingsService.getSettings();

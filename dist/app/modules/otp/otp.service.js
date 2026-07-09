@@ -64,7 +64,7 @@ const verifyOTP = (email, otp) => __awaiter(void 0, void 0, void 0, function* ()
     if (!savedOtp) {
         throw new AppError_1.default(401, "Invalid OTP");
     }
-    if (savedOtp !== otp) {
+    if (Number(savedOtp) !== Number(otp)) {
         throw new AppError_1.default(401, "Invalid OTP");
     }
     yield Promise.all([

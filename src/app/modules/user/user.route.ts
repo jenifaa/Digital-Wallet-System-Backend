@@ -98,4 +98,10 @@ router.patch(
   userControllers.reactivateAgent,
 );
 
+router.delete(
+  "/:id",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  userControllers.deleteUser
+);
+
 export const UserRoutes = router;

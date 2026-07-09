@@ -220,6 +220,23 @@ const searchAgents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.deleteUser(
+    req.params.id as string,
+    req.user as JwtPayload
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "User deleted successfully",
+    data: result,
+  });
+});
+
+
+
 export const userControllers = {
   createUser,
   getAllUsers,
@@ -235,4 +252,5 @@ export const userControllers = {
   suspendAgent,
   reactivateAgent,
   updateUserProfile,
+  deleteUser
 };
