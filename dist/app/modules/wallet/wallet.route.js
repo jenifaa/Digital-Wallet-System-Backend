@@ -16,4 +16,5 @@ router.patch("/unblock/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.AD
 router.post("/pin/set", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), wallet_controller_1.WalletController.setPin);
 router.post("/pin/forgot", wallet_controller_1.WalletController.forgetPin);
 router.post("/pin/reset", wallet_controller_1.WalletController.resetPin);
+router.delete("/:id", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), wallet_controller_1.WalletController.deleteWallet);
 exports.WalletRoutes = router;

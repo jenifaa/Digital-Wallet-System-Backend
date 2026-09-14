@@ -159,6 +159,17 @@ const searchUsers = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0,
         meta: result.meta,
     });
 }));
+const lookupRecipient = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const query = String(req.query.query || "");
+    const result = yield user_service_1.UserServices.lookupRecipient(query, decodedToken.userId);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Recipients retrieved successfully",
+        data: result,
+    });
+}));
 const searchAgents = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.UserServices.searchAgents(req.query);
     (0, sendResponse_1.sendResponse)(res, {
@@ -167,6 +178,15 @@ const searchAgents = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0
         message: "Agents retrieved successfully",
         data: result.data,
         meta: result.meta,
+    });
+}));
+const deleteUser = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserServices.deleteUser(req.params.id, req.user);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: 200,
+        message: "User deleted successfully",
+        data: result,
     });
 }));
 exports.userControllers = {
@@ -184,4 +204,6 @@ exports.userControllers = {
     suspendAgent,
     reactivateAgent,
     updateUserProfile,
+    deleteUser,
+    lookupRecipient
 };

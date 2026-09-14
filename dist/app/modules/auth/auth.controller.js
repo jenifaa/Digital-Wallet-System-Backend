@@ -37,10 +37,13 @@ const env_1 = require("../../config/env");
 const credentialsLogin = (0, catchAsync_1.catchAsync)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     passport_1.default.authenticate("local", (err, user, info) => __awaiter(void 0, void 0, void 0, function* () {
         if (err) {
-            return next(err.message);
+            const message = typeof err === "string"
+                ? err
+                : (err === null || err === void 0 ? void 0 : err.message) || "Unable to sign in. Please try again.";
+            return next(new AppError_1.default(401, message));
         }
         if (!user) {
-            return next(new AppError_1.default(401, info.message));
+            return next(new AppError_1.default(401, (info === null || info === void 0 ? void 0 : info.message) || "Incorrect email or password."));
         }
         const userTokens = yield (0, userTokens_1.createUserToken)(user);
         const _a = user.toObject(), { password: pass } = _a, rest = __rest(_a, ["password"]);

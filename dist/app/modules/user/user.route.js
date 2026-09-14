@@ -14,6 +14,7 @@ router.get("/search", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, us
 router.get("/search/agents", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.userControllers.searchAgents);
 router.get("/all-users", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.userControllers.getAllUsers);
 router.get("/me", (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), user_controller_1.userControllers.getMe);
+router.get("/lookup-recipient", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER, user_interface_1.Role.AGENT), user_controller_1.userControllers.lookupRecipient);
 router.post("/apply-agent", (0, checkAuth_1.checkAuth)(user_interface_1.Role.USER), user_controller_1.userControllers.applyForAgent);
 router.get("/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.userControllers.getSingleUser);
 router.patch("/profile", multer_config_1.multerUpload.single("file"), (0, validateRequest_1.validateRequest)(user_validation_1.updateUserProfileZodSchema), (0, checkAuth_1.checkAuth)(...Object.values(user_interface_1.Role)), user_controller_1.userControllers.updateUserProfile);
@@ -23,4 +24,5 @@ router.patch("/approve-agent/:id", (0, checkAuth_1.checkAuth)(user_interface_1.R
 router.patch("/reject-agent/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), (0, validateRequest_1.validateRequest)(user_validation_1.rejectAgentSchema), user_controller_1.userControllers.rejectAgent);
 router.patch("/suspend-agent/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), (0, validateRequest_1.validateRequest)(user_validation_1.rejectAgentSchema), user_controller_1.userControllers.suspendAgent);
 router.patch("/reactivate-agent/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.userControllers.reactivateAgent);
+router.delete("/:id", (0, checkAuth_1.checkAuth)(user_interface_1.Role.ADMIN, user_interface_1.Role.SUPER_ADMIN), user_controller_1.userControllers.deleteUser);
 exports.UserRoutes = router;

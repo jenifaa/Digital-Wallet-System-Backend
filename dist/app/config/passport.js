@@ -27,11 +27,17 @@ passport_1.default.use(new passport_local_1.Strategy({
     try {
         const isUserExist = yield user_model_1.User.findOne({ email });
         if (!isUserExist) {
-            return done(null, false, { message: "User does not exist" });
+            return done(null, false, { message: "Incorrect email or password." });
         }
-        if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED ||
-            isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
-            return done(`User is ${isUserExist.isActive}`);
+        if (isUserExist.isActive === user_interface_1.IsActive.BLOCKED) {
+            return done(null, false, {
+                message: "Your account has been blocked. Please contact the administrator.",
+            });
+        }
+        if (isUserExist.isActive === user_interface_1.IsActive.INACTIVE) {
+            return done(null, false, {
+                message: "Your account has been deactivated. Please contact the administrator.",
+            });
         }
         if (isUserExist.isDeleted) {
             return done(null, false, { message: "User is deleted" });
@@ -47,7 +53,7 @@ passport_1.default.use(new passport_local_1.Strategy({
         }
         const isPasswordMatched = yield bcryptjs_1.default.compare(password, isUserExist.password);
         if (!isPasswordMatched) {
-            return done(null, false, { message: "Password does not match" });
+            return done(null, false, { message: "Incorrect email or password." });
         }
         return done(null, isUserExist);
     }
@@ -71,10 +77,15 @@ passport_1.default.use(new passport_google_oauth20_1.Strategy({
         if (user && !user.isVerified) {
             return done(null, false, { message: "User is not verified" });
         }
-        if (user &&
-            (user.isActive === user_interface_1.IsActive.BLOCKED ||
-                user.isActive === user_interface_1.IsActive.INACTIVE)) {
-            return done(`User is ${user.isActive}`);
+        if (user && user.isActive === user_interface_1.IsActive.BLOCKED) {
+            return done(null, false, {
+                message: "Your account has been blocked. Please contact the administrator.",
+            });
+        }
+        if (user && user.isActive === user_interface_1.IsActive.INACTIVE) {
+            return done(null, false, {
+                message: "Your account has been deactivated. Please contact the administrator.",
+            });
         }
         if (user && user.isDeleted) {
             return done(null, false, { message: "User is deleted" });

@@ -88,6 +88,16 @@ const resetPin = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, vo
         data: result,
     });
 }));
+const deleteWallet = (0, catchAsync_1.catchAsync)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const decodedToken = req.user;
+    const result = yield wallet_service_1.walletService.deleteWallet(req.params.id, decodedToken);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: http_status_codes_1.default.OK,
+        message: "Wallet deleted successfully",
+        data: result,
+    });
+}));
 exports.WalletController = {
     getMyWallet,
     getAllWallets,
@@ -96,4 +106,5 @@ exports.WalletController = {
     setPin,
     forgetPin,
     resetPin,
+    deleteWallet,
 };

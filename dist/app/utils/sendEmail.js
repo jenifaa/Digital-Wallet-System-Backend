@@ -43,7 +43,7 @@ const sendEmail = (_a) => __awaiter(void 0, [_a], void 0, function* ({ to, subje
                 contentType: attachment.contentType,
             })),
         });
-        console.log(`\u2709\uFE0F Email send to ${to}: ${info.messageId}`);
+        // console.log(`\u2709\uFE0F Email send to ${to}: ${info.messageId}`);
     }
     catch (error) {
         console.error("Email sending error:", error.message);

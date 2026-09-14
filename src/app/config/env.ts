@@ -46,10 +46,7 @@ interface EnvConfig {
     SMTP_FROM: string;
   };
 
-  REDIS_HOST: string;
-  REDIS_PORT: string;
-  REDIS_USERNAME: string;
-  REDIS_PASSWORD: string;
+
   UPSTASH_REDIS_REST_TOKEN: string;
   UPSTASH_REDIS_REST_URL: string;
 }
@@ -92,10 +89,10 @@ const loadEnvVariables = (): EnvConfig => {
     "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
     "CLOUDINARY_API_SECRET",
-    "REDIS_HOST",
-    "REDIS_PORT",
-    "REDIS_USERNAME",
-    "REDIS_PASSWORD",
+    // "REDIS_HOST",
+    // "REDIS_PORT",
+    // "REDIS_USERNAME",
+    // "REDIS_PASSWORD",
     "UPSTASH_REDIS_REST_URL",
     "UPSTASH_REDIS_REST_TOKEN",
   ];
@@ -146,10 +143,10 @@ const loadEnvVariables = (): EnvConfig => {
       SMTP_FROM: process.env.SMTP_FROM as string,
     },
 
-    REDIS_HOST: process.env.REDIS_HOST as string,
-    REDIS_PORT: process.env.REDIS_PORT as string,
-    REDIS_USERNAME: process.env.REDIS_USERNAME as string,
-    REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
+    // REDIS_HOST: process.env.REDIS_HOST as string,
+    // REDIS_PORT: process.env.REDIS_PORT as string,
+    // REDIS_USERNAME: process.env.REDIS_USERNAME as string,
+    // REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL as string,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN as string,
     CLOUDINARY: {

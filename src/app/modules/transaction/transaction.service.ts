@@ -228,19 +228,19 @@ const sendMoney = async (payload: Partial<ITransaction>, userId: string) => {
           status: TransactionStatus.SUCCESS,
           transactionId: `${referenceId}_D`,
           processedAt: new Date(),
-        },
-        {
-          sender: senderUser._id,
-          receiver: receiverUser._id,
-          amount,
-          fee: 0,
-          type: TransactionType.SEND,
-          entry: TransactionEntry.CREDIT,
-          referenceId,
-          status: TransactionStatus.SUCCESS,
-          transactionId: `${referenceId}_C`,
-          processedAt: new Date(),
-        },
+        }
+        // {
+        //   sender: senderUser._id,
+        //   receiver: receiverUser._id,
+        //   amount,
+        //   fee: 0,
+        //   type: TransactionType.SEND,
+        //   entry: TransactionEntry.CREDIT,
+        //   referenceId,
+        //   status: TransactionStatus.SUCCESS,
+        //   transactionId: `${referenceId}_C`,
+        //   processedAt: new Date(),
+        // },
       ],
       { session, ordered: true },
     );
@@ -337,24 +337,12 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
           fee: 0,
           commission,
           type: TransactionType.CASH_IN,
-          entry: TransactionEntry.DEBIT,
+          entry: TransactionEntry.CREDIT,
           referenceId,
           status: TransactionStatus.SUCCESS,
           transactionId: `${referenceId}_D`,
           processedAt: new Date(),
-        },
-        {
-          sender: agent._id,
-          receiver: user.phone,
-          amount,
-          fee: 0,
-          type: TransactionType.CASH_IN,
-          entry: TransactionEntry.CREDIT,
-          referenceId,
-          status: TransactionStatus.SUCCESS,
-          transactionId: `${referenceId}_C`,
-          processedAt: new Date(),
-        },
+        }
       ],
       { session, ordered: true },
     );
@@ -701,30 +689,28 @@ const cashOut = async (
         },
 
         // credit entry
-        {
-          sender: user._id,
+        // {
+        //   sender: user._id,
+        //   receiver: agent._id,
 
-          // STORE AGENT OBJECT ID
-          receiver: agent._id,
+        //   amount,
 
-          amount,
+        //   fee: 0,
 
-          fee: 0,
+        //   commission,
 
-          commission,
+        //   type: TransactionType.CASH_OUT,
 
-          type: TransactionType.CASH_OUT,
+        //   entry: TransactionEntry.CREDIT,
 
-          entry: TransactionEntry.CREDIT,
+        //   referenceId,
 
-          referenceId,
+        //   status: TransactionStatus.SUCCESS,
 
-          status: TransactionStatus.SUCCESS,
+        //   transactionId: `${referenceId}_C`,
 
-          transactionId: `${referenceId}_C`,
-
-          processedAt: new Date(),
-        },
+        //   processedAt: new Date(),
+        // },
       ],
       {
         session,

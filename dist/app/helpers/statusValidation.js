@@ -25,10 +25,10 @@ const assertUserCanTransact = (user) => {
         throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "User account is deleted");
     }
     if (user.isActive === user_interface_1.IsActive.BLOCKED) {
-        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "User account is blocked");
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Your account is currently blocked. You cannot perform wallet transactions. Please contact the administrator.");
     }
     if (user.isActive === user_interface_1.IsActive.INACTIVE) {
-        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "User account is deactivated");
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Your account is currently deactivated. You cannot perform wallet transactions. Please contact the administrator.");
     }
 };
 exports.assertUserCanTransact = assertUserCanTransact;
@@ -37,10 +37,10 @@ const assertWalletCanTransact = (wallet, action = "send") => {
         throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "Wallet is deleted");
     }
     if (wallet.status === wallet_interface_1.WalletStatus.BLOCKED) {
-        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, `Wallet is blocked and cannot ${action}`);
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, `This wallet is blocked and cannot ${action}. Please contact the administrator.`);
     }
     if (wallet.status === wallet_interface_1.WalletStatus.SUSPENDED) {
-        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, `Wallet is suspended and cannot ${action}`);
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, `This wallet is suspended and cannot ${action}. Please contact the administrator.`);
     }
 };
 exports.assertWalletCanTransact = assertWalletCanTransact;

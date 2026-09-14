@@ -111,13 +111,15 @@ const sendMoney = (payload, userId) => __awaiter(void 0, void 0, void 0, functio
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
         }
         if (!payload.receiver) {
-            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Receiver phone is required");
+            throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Receiver phone or email is required");
         }
+        const receiverValue = String(payload.receiver).trim();
         const receiverUser = yield user_model_1.User.findOne({
-            phone: payload.receiver,
-        }).select("_id phone isActive isDeleted");
+            isDeleted: { $ne: true },
+            $or: [{ phone: receiverValue }, { email: receiverValue }],
+        }).select("_id phone email isActive isDeleted");
         if (!receiverUser) {
-            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Receiver not found");
+            throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Recipient not found");
         }
         if (String(senderUser._id) === String(receiverUser._id)) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Cannot send money to yourself");
@@ -219,7 +221,13 @@ const cashIn = (payload, agentId) => __awaiter(void 0, void 0, void 0, function*
         if (!payload.receiver) {
             throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "receiver required");
         }
-        const user = yield user_model_1.User.findById(payload.receiver).select("_id isActive isDeleted");
+        const receiverValue = String(payload.receiver).trim();
+        const user = mongoose_1.Types.ObjectId.isValid(receiverValue)
+            ? yield user_model_1.User.findById(receiverValue).select("_id isActive isDeleted")
+            : yield user_model_1.User.findOne({
+                isDeleted: { $ne: true },
+                $or: [{ phone: receiverValue }, { email: receiverValue }],
+            }).select("_id isActive isDeleted");
         if (!user)
             throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "User not found");
         (0, statusValidation_1.assertUserCanTransact)(user);
@@ -632,6 +640,9 @@ const withdraw = (payload, userId) => __awaiter(void 0, void 0, void 0, function
     }
 });
 const getMyTransactions = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, ...args_1], void 0, function* (userId, query = {}) {
+    if (query.startDate && query.endDate && new Date(query.startDate) > new Date(query.endDate)) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Start date cannot be after end date");
+    }
     const filter = {
         $or: [{ sender: userId }, { receiver: userId }],
     };
@@ -640,6 +651,7 @@ const getMyTransactions = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, 
         .populate("receiver", "name email phone"), query);
     const transactions = queryBuilder
         .filter()
+        .search(["transactionId", "referenceId"])
         .dateRange()
         .amountRange()
         .sort()
@@ -651,9 +663,25 @@ const getMyTransactions = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, 
     return { data, meta };
 });
 const searchTransactions = (query) => __awaiter(void 0, void 0, void 0, function* () {
+    if (query.startDate && query.endDate && new Date(query.startDate) > new Date(query.endDate)) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Start date cannot be after end date");
+    }
     const filter = {};
     if (query.user) {
         filter.$or = [{ sender: query.user }, { receiver: query.user }];
+    }
+    if (query.sender) {
+        filter.sender = query.sender;
+    }
+    if (query.receiver) {
+        filter.receiver = query.receiver;
+    }
+    if (query.agent) {
+        filter.$or = [
+            ...(Array.isArray(filter.$or) ? filter.$or : []),
+            { sender: query.agent },
+            { receiver: query.agent },
+        ];
     }
     if (query.type) {
         filter.type = query.type;

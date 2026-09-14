@@ -21,6 +21,9 @@ const wallet_constant_1 = require("./wallet.constant");
 const wallet_model_1 = require("./wallet.model");
 const http_status_codes_1 = __importDefault(require("http-status-codes"));
 const wallet_interface_1 = require("./wallet.interface");
+const transaction_model_1 = require("../transaction/transaction.model");
+const transaction_interface_1 = require("../transaction/transaction.interface");
+const user_interface_1 = require("../user/user.interface");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const env_1 = require("../../config/env");
 const emailService_1 = require("../../utils/emailService");
@@ -127,6 +130,33 @@ const resetPin = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     yield wallet.save();
     return { message: "PIN reset successfully" };
 });
+const deleteWallet = (walletId, decodedToken) => __awaiter(void 0, void 0, void 0, function* () {
+    const wallet = yield wallet_model_1.Wallet.findById(walletId);
+    if (!wallet) {
+        throw new AppError_1.default(http_status_codes_1.default.NOT_FOUND, "Wallet not found");
+    }
+    if (wallet.isDeleted) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Wallet is already deleted");
+    }
+    const isOwner = String(wallet.user) === String(decodedToken.userId);
+    const isAdmin = decodedToken.role === user_interface_1.Role.ADMIN || decodedToken.role === user_interface_1.Role.SUPER_ADMIN;
+    if (!isOwner && !isAdmin) {
+        throw new AppError_1.default(http_status_codes_1.default.FORBIDDEN, "You are not authorized to delete this wallet");
+    }
+    if (wallet.balance > 0) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Cannot delete a wallet that still has a balance. Transfer or withdraw the funds first.");
+    }
+    const pendingCount = yield transaction_model_1.Transaction.countDocuments({
+        $or: [{ sender: wallet.user }, { receiver: wallet.user }],
+        status: transaction_interface_1.TransactionStatus.PENDING,
+    });
+    if (pendingCount > 0) {
+        throw new AppError_1.default(http_status_codes_1.default.BAD_REQUEST, "Cannot delete this wallet while transactions are pending.");
+    }
+    wallet.isDeleted = true;
+    yield wallet.save();
+    return { deleted: true };
+});
 exports.walletService = {
     getMyWallet,
     getAllWallets,
@@ -135,4 +165,5 @@ exports.walletService = {
     setPinForUser,
     forgetPin,
     resetPin,
+    deleteWallet,
 };

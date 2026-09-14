@@ -53,7 +53,7 @@ export const sendEmail = async ({
       })),
     });
 
-    console.log(`\u2709\uFE0F Email send to ${to}: ${info.messageId}`);
+    // console.log(`\u2709\uFE0F Email send to ${to}: ${info.messageId}`);
   } catch (error: any) {
   console.error("Email sending error:", error.message);
   throw new AppError(500, error.message || "Email sending failed");
