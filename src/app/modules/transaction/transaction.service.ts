@@ -135,14 +135,16 @@ const sendMoney = async (payload: Partial<ITransaction>, userId: string) => {
     }
 
     if (!payload.receiver) {
-      throw new AppError(httpStatus.BAD_REQUEST, "Receiver phone is required");
+      throw new AppError(httpStatus.BAD_REQUEST, "Receiver phone or email is required");
     }
 
+    const receiverValue = String(payload.receiver).trim();
     const receiverUser = await User.findOne({
-      phone: payload.receiver as string,
-    }).select("_id phone isActive isDeleted");
+      isDeleted: { $ne: true },
+      $or: [{ phone: receiverValue }, { email: receiverValue }],
+    }).select("_id phone email isActive isDeleted");
     if (!receiverUser) {
-      throw new AppError(httpStatus.NOT_FOUND, "Receiver not found");
+      throw new AppError(httpStatus.NOT_FOUND, "Recipient not found");
     }
 
     if (String(senderUser._id) === String(receiverUser._id)) {
@@ -277,7 +279,13 @@ const cashIn = async (payload: Partial<ITransaction>, agentId: string) => {
       throw new AppError(httpStatus.BAD_REQUEST, "receiver required");
     }
 
-    const user = await User.findById(payload.receiver).select("_id isActive isDeleted");
+    const receiverValue = String(payload.receiver).trim();
+    const user = Types.ObjectId.isValid(receiverValue)
+      ? await User.findById(receiverValue).select("_id isActive isDeleted")
+      : await User.findOne({
+          isDeleted: { $ne: true },
+          $or: [{ phone: receiverValue }, { email: receiverValue }],
+        }).select("_id isActive isDeleted");
     if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
     assertUserCanTransact(user);
 
@@ -816,7 +824,11 @@ const withdraw = async (payload: Partial<ITransaction>, userId: string) => {
 
 
 const getMyTransactions = async (userId: string, query: Record<string, string> = {}) => {
-  const filter = {
+  if (query.startDate && query.endDate && new Date(query.startDate) > new Date(query.endDate)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Start date cannot be after end date");
+  }
+
+  const filter: Record<string, unknown> = {
     $or: [{ sender: userId }, { receiver: userId }],
   };
 
@@ -829,6 +841,7 @@ const getMyTransactions = async (userId: string, query: Record<string, string> =
 
   const transactions = queryBuilder
     .filter()
+    .search(["transactionId", "referenceId"])
     .dateRange()
     .amountRange()
     .sort()
@@ -843,10 +856,27 @@ const getMyTransactions = async (userId: string, query: Record<string, string> =
 };
 
 const searchTransactions = async (query: Record<string, string>) => {
+  if (query.startDate && query.endDate && new Date(query.startDate) > new Date(query.endDate)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Start date cannot be after end date");
+  }
+
   const filter: Record<string, unknown> = {};
 
   if (query.user) {
     filter.$or = [{ sender: query.user }, { receiver: query.user }];
+  }
+  if (query.sender) {
+    filter.sender = query.sender;
+  }
+  if (query.receiver) {
+    filter.receiver = query.receiver;
+  }
+  if (query.agent) {
+    filter.$or = [
+      ...(Array.isArray(filter.$or) ? (filter.$or as object[]) : []),
+      { sender: query.agent },
+      { receiver: query.agent },
+    ];
   }
   if (query.type) {
     filter.type = query.type;

@@ -48,10 +48,14 @@ export class QueryBuilder<T> {
 
     const range: Record<string, Date> = {};
     if (startDate) {
-      range.$gte = new Date(startDate);
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      range.$gte = start;
     }
     if (endDate) {
-      range.$lte = new Date(endDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      range.$lte = end;
     }
 
     this.modelQuery = this.modelQuery.find({ [field]: range });

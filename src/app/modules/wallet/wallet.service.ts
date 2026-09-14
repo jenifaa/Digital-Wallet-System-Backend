@@ -6,6 +6,10 @@ import { walletSearchableFields } from "./wallet.constant";
 import { Wallet } from "./wallet.model";
 import httpStatus from "http-status-codes";
 import { WalletStatus } from "./wallet.interface";
+import { Transaction } from "../transaction/transaction.model";
+import { TransactionStatus } from "../transaction/transaction.interface";
+import { Role } from "../user/user.interface";
+import { JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import { envVars } from "../../config/env";
 import { emailService } from "../../utils/emailService";
@@ -159,6 +163,46 @@ const resetPin = async (payload: { id: string; token: string; newPin: string }) 
 
   return { message: "PIN reset successfully" };
 };
+
+const deleteWallet = async (walletId: string, decodedToken: JwtPayload) => {
+  const wallet = await Wallet.findById(walletId);
+  if (!wallet) {
+    throw new AppError(httpStatus.NOT_FOUND, "Wallet not found");
+  }
+  if (wallet.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Wallet is already deleted");
+  }
+
+  const isOwner = String(wallet.user) === String(decodedToken.userId);
+  const isAdmin =
+    decodedToken.role === Role.ADMIN || decodedToken.role === Role.SUPER_ADMIN;
+  if (!isOwner && !isAdmin) {
+    throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to delete this wallet");
+  }
+
+  if (wallet.balance > 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Cannot delete a wallet that still has a balance. Transfer or withdraw the funds first.",
+    );
+  }
+
+  const pendingCount = await Transaction.countDocuments({
+    $or: [{ sender: wallet.user }, { receiver: wallet.user }],
+    status: TransactionStatus.PENDING,
+  });
+  if (pendingCount > 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Cannot delete this wallet while transactions are pending.",
+    );
+  }
+
+  wallet.isDeleted = true;
+  await wallet.save();
+  return { deleted: true };
+};
+
 export const walletService = {
   getMyWallet,
   getAllWallets,
@@ -167,4 +211,5 @@ export const walletService = {
   setPinForUser,
   forgetPin,
   resetPin,
+  deleteWallet,
 };

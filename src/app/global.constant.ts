@@ -10,4 +10,9 @@
   "maxAmount",
   "email",
   "phone",
+  "user",
+  "sender",
+  "receiver",
+  "agent",
+  "query",
 ];

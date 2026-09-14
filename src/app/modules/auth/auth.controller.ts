@@ -17,11 +17,17 @@ const credentialsLogin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate("local", async (err: any, user: any, info: any) => {
       if (err) {
-        return next(err.message);
+        const message =
+          typeof err === "string"
+            ? err
+            : err?.message || "Unable to sign in. Please try again.";
+        return next(new AppError(401, message));
       }
 
       if (!user) {
-        return next(new AppError(401, info.message));
+        return next(
+          new AppError(401, info?.message || "Incorrect email or password."),
+        );
       }
 
       const userTokens = await createUserToken(user);

@@ -39,6 +39,12 @@ router.get(
 
 router.get("/me", checkAuth(...Object.values(Role)), userControllers.getMe);
 
+router.get(
+  "/lookup-recipient",
+  checkAuth(Role.USER, Role.AGENT),
+  userControllers.lookupRecipient,
+);
+
 router.post(
   "/apply-agent",
   checkAuth(Role.USER),

@@ -32,13 +32,16 @@ export const checkAuth =
         throw new AppError(httpStatus.BAD_REQUEST, "User does not Exist");
       }
 
-      if (
-        isUserExist.isActive === IsActive.BLOCKED ||
-        isUserExist.isActive === IsActive.INACTIVE
-      ) {
+      if (isUserExist.isActive === IsActive.BLOCKED) {
         throw new AppError(
-          httpStatus.BAD_REQUEST,
-          `User is ${isUserExist.isActive}`,
+          httpStatus.FORBIDDEN,
+          "Your account has been blocked. Please contact the administrator.",
+        );
+      }
+      if (isUserExist.isActive === IsActive.INACTIVE) {
+        throw new AppError(
+          httpStatus.FORBIDDEN,
+          "Your account has been deactivated. Please contact the administrator.",
         );
       }
       if (isUserExist.isDeleted) {

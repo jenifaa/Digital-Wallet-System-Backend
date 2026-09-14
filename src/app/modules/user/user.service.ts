@@ -3,18 +3,51 @@ import { envVars } from "../../config/env";
 import AppError from "../../errorHelpers/AppError";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { userSearchableFields } from "./user.constant";
-import { IAuthProvider, IUser, Role, AgentStatus } from "./user.interface";
+import { IAuthProvider, IUser, Role, AgentStatus, IsActive } from "./user.interface";
 import { User } from "./user.model";
 import bcryptjs from "bcryptjs";
 import httpStatus from "http-status-codes";
 import { Wallet } from "../wallet/wallet.model";
 import { emailService } from "../../utils/emailService";
 import { deleteImageFromCloudinary } from "../../config/cloudinary.config";
+import { NotificationService } from "../notification/notification.service";
+import { NotificationType } from "../notification/notification.interface";
+import { Transaction } from "../transaction/transaction.model";
+import { TransactionStatus } from "../transaction/transaction.interface";
+const notifyAdminsOfAgentRequest = async (applicantId: string) => {
+  const admins = await User.find({
+    role: { $in: [Role.ADMIN, Role.SUPER_ADMIN] },
+    isDeleted: { $ne: true },
+  }).select("_id");
+
+  await Promise.all(
+    admins.map((admin) =>
+      NotificationService.sendToUser({
+        title: "New agent request",
+        message: "A new agent request has been submitted.",
+        recipient: admin._id,
+        sender: applicantId as unknown as import("mongoose").Types.ObjectId,
+        type: NotificationType.AGENT,
+      }),
+    ),
+  );
+};
+
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
   const isUserExist = await User.findOne({ email });
   if (isUserExist) {
-    throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
+    throw new AppError(httpStatus.BAD_REQUEST, "An account with this email already exists");
+  }
+
+  if (rest.phone) {
+    const phoneExists = await User.findOne({ phone: rest.phone });
+    if (phoneExists) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        "An account with this phone number already exists",
+      );
+    }
   }
 
   const hashedPassword = await bcryptjs.hash(
@@ -26,11 +59,21 @@ const createUser = async (payload: Partial<IUser>) => {
     provider: "credentials",
     providerId: email as string,
   };
+
+  const isAgentSignup = rest.role === Role.AGENT;
   const user = await User.create({
     email,
     password: hashedPassword,
     auths: [authProvider],
     ...rest,
+    ...(isAgentSignup
+      ? {
+          role: Role.AGENT,
+          isAgentApproved: false,
+          agentStatus: AgentStatus.PENDING,
+          agentStatusHistory: [{ status: AgentStatus.PENDING, changedAt: new Date() }],
+        }
+      : {}),
   });
 
   const wallet = await Wallet.create({
@@ -44,11 +87,18 @@ const createUser = async (payload: Partial<IUser>) => {
     await emailService.sendWelcome(user.email, user.name);
   }
 
+  if (isAgentSignup) {
+    await notifyAdminsOfAgentRequest(String(user._id));
+  }
+
   return user;
 };
 
 const getAllUsers = async (query: Record<string, string>) => {
-  const queryBuilder = new QueryBuilder(User.find().select("-password"), query);
+  const queryBuilder = new QueryBuilder(
+    User.find().select("-password").populate("wallet", "balance status"),
+    query,
+  );
   const usersData = queryBuilder
     .filter()
     .search(userSearchableFields)
@@ -301,6 +351,7 @@ const applyForAgent = async (userId: string) => {
   ];
 
   await user.save();
+  await notifyAdminsOfAgentRequest(String(user._id));
   return user;
 };
 
@@ -330,6 +381,14 @@ const approveAgent = async (userId: string, decodedToken: JwtPayload) => {
   ];
 
   await user.save();
+
+  await NotificationService.sendToUser({
+    title: "Agent request approved",
+    message: "Your agent request has been approved by the administrator.",
+    recipient: user._id,
+    sender: decodedToken.userId as unknown as import("mongoose").Types.ObjectId,
+    type: NotificationType.AGENT,
+  });
 
   return user;
 };
@@ -365,6 +424,17 @@ const rejectAgent = async (
   ];
 
   await user.save();
+
+  await NotificationService.sendToUser({
+    title: "Agent request rejected",
+    message: reason
+      ? `Your agent request was rejected. Reason: ${reason}`
+      : "Your agent request was rejected by the administrator.",
+    recipient: user._id,
+    sender: decodedToken.userId as unknown as import("mongoose").Types.ObjectId,
+    type: NotificationType.AGENT,
+  });
+
   return user;
 };
 
@@ -398,6 +468,17 @@ const suspendAgent = async (
   ];
 
   await user.save();
+
+  await NotificationService.sendToUser({
+    title: "Agent account suspended",
+    message: reason
+      ? `Your agent account has been suspended. Reason: ${reason}`
+      : "Your agent account has been suspended by the administrator.",
+    recipient: user._id,
+    sender: decodedToken.userId as unknown as import("mongoose").Types.ObjectId,
+    type: NotificationType.AGENT,
+  });
+
   return user;
 };
 
@@ -426,13 +507,44 @@ const reactivateAgent = async (userId: string, decodedToken: JwtPayload) => {
   ];
 
   await user.save();
+
+  await NotificationService.sendToUser({
+    title: "Agent account restored",
+    message: "Your agent account has been restored by the administrator.",
+    recipient: user._id,
+    sender: decodedToken.userId as unknown as import("mongoose").Types.ObjectId,
+    type: NotificationType.AGENT,
+  });
+
   return user;
 };
 
+const lookupRecipient = async (query: string, currentUserId: string) => {
+  const term = String(query || "").trim();
+  if (term.length < 3) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Enter at least 3 characters to search",
+    );
+  }
+
+  const users = await User.find({
+    isDeleted: { $ne: true },
+    _id: { $ne: currentUserId },
+    $or: [
+      { phone: { $regex: term, $options: "i" } },
+      { email: { $regex: term, $options: "i" } },
+    ],
+  })
+    .select("name email phone isActive role")
+    .limit(8);
+
+  return users;
+};
 
 const deleteUser = async (
   userId: string,
-  decodedToken: JwtPayload
+  decodedToken: JwtPayload,
 ) => {
   if (
     decodedToken.role !== Role.ADMIN &&
@@ -453,9 +565,45 @@ const deleteUser = async (
     );
   }
 
-  user.isDeleted = true;
+  if (user.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User is already deleted");
+  }
 
+  if (user.role === Role.SUPER_ADMIN) {
+    throw new AppError(httpStatus.FORBIDDEN, "Super admin cannot be deleted");
+  }
+
+  if (String(user._id) === String(decodedToken.userId)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "You cannot delete your own account");
+  }
+
+  const wallet = await Wallet.findOne({ user: user._id });
+  if (wallet && wallet.balance > 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Cannot delete a user whose wallet still has a balance",
+    );
+  }
+
+  const pendingCount = await Transaction.countDocuments({
+    $or: [{ sender: user._id }, { receiver: user._id }],
+    status: TransactionStatus.PENDING,
+  });
+  if (pendingCount > 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Cannot delete a user with pending transactions",
+    );
+  }
+
+  user.isDeleted = true;
+  user.isActive = IsActive.INACTIVE;
   await user.save();
+
+  if (wallet) {
+    wallet.isDeleted = true;
+    await wallet.save();
+  }
 
   return null;
 };
@@ -475,5 +623,6 @@ export const UserServices = {
   rejectAgent,
   suspendAgent,
   reactivateAgent,
-  deleteUser
+  deleteUser,
+  lookupRecipient,
 };

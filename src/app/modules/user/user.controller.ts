@@ -209,6 +209,18 @@ const searchUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const lookupRecipient = catchAsync(async (req: Request, res: Response) => {
+  const decodedToken = req.user as JwtPayload;
+  const query = String(req.query.query || "");
+  const result = await UserServices.lookupRecipient(query, decodedToken.userId);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Recipients retrieved successfully",
+    data: result,
+  });
+});
+
 const searchAgents = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.searchAgents(req.query as Record<string, string>);
   sendResponse(res, {
@@ -252,5 +264,6 @@ export const userControllers = {
   suspendAgent,
   reactivateAgent,
   updateUserProfile,
-  deleteUser
+  deleteUser,
+  lookupRecipient
 };

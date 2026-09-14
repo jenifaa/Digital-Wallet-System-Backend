@@ -22,14 +22,20 @@ passport.use(
         const isUserExist = await User.findOne({ email });
 
         if (!isUserExist) {
-          return done(null, false, { message: "User does not exist" });
+          return done(null, false, { message: "Incorrect email or password." });
         }
 
-        if (
-          isUserExist.isActive === IsActive.BLOCKED ||
-          isUserExist.isActive === IsActive.INACTIVE
-        ) {
-          return done(`User is ${isUserExist.isActive}`);
+        if (isUserExist.isActive === IsActive.BLOCKED) {
+          return done(null, false, {
+            message:
+              "Your account has been blocked. Please contact the administrator.",
+          });
+        }
+        if (isUserExist.isActive === IsActive.INACTIVE) {
+          return done(null, false, {
+            message:
+              "Your account has been deactivated. Please contact the administrator.",
+          });
         }
         if (isUserExist.isDeleted) {
           return done(null, false, { message: "User is deleted" });
@@ -54,7 +60,7 @@ passport.use(
         );
 
         if (!isPasswordMatched) {
-          return done(null, false, { message: "Password does not match" });
+          return done(null, false, { message: "Incorrect email or password." });
         }
         return done(null, isUserExist);
       } catch (error) {
@@ -91,12 +97,17 @@ passport.use(
           return done(null, false, { message: "User is not verified" });
         }
 
-        if (
-          user &&
-          (user.isActive === IsActive.BLOCKED ||
-            user.isActive === IsActive.INACTIVE)
-        ) {
-          return done(`User is ${user.isActive}`);
+        if (user && user.isActive === IsActive.BLOCKED) {
+          return done(null, false, {
+            message:
+              "Your account has been blocked. Please contact the administrator.",
+          });
+        }
+        if (user && user.isActive === IsActive.INACTIVE) {
+          return done(null, false, {
+            message:
+              "Your account has been deactivated. Please contact the administrator.",
+          });
         }
         if (user && user.isDeleted) {
           return done(null, false, { message: "User is deleted" });

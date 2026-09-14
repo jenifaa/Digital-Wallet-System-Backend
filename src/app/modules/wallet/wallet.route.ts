@@ -38,4 +38,10 @@ router.post(
 router.post("/pin/forgot", WalletController.forgetPin);
 router.post("/pin/reset", WalletController.resetPin);
 
+router.delete(
+  "/:id",
+  checkAuth(...Object.values(Role)),
+  WalletController.deleteWallet,
+);
+
 export const WalletRoutes = router;

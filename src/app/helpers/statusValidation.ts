@@ -11,10 +11,16 @@ export const assertUserCanTransact = (user: Pick<IUser, "isActive" | "isDeleted"
     throw new AppError(httpStatus.FORBIDDEN, "User account is deleted");
   }
   if (user.isActive === IsActive.BLOCKED) {
-    throw new AppError(httpStatus.FORBIDDEN, "User account is blocked");
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Your account is currently blocked. You cannot perform wallet transactions. Please contact the administrator.",
+    );
   }
   if (user.isActive === IsActive.INACTIVE) {
-    throw new AppError(httpStatus.FORBIDDEN, "User account is deactivated");
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Your account is currently deactivated. You cannot perform wallet transactions. Please contact the administrator.",
+    );
   }
 };
 
@@ -26,10 +32,16 @@ export const assertWalletCanTransact = (
     throw new AppError(httpStatus.FORBIDDEN, "Wallet is deleted");
   }
   if (wallet.status === WalletStatus.BLOCKED) {
-    throw new AppError(httpStatus.FORBIDDEN, `Wallet is blocked and cannot ${action}`);
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      `This wallet is blocked and cannot ${action}. Please contact the administrator.`,
+    );
   }
   if (wallet.status === WalletStatus.SUSPENDED) {
-    throw new AppError(httpStatus.FORBIDDEN, `Wallet is suspended and cannot ${action}`);
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      `This wallet is suspended and cannot ${action}. Please contact the administrator.`,
+    );
   }
 };
 
