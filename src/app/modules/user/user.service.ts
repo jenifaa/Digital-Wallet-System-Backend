@@ -327,6 +327,42 @@ const makeAgent = async (userId: string, decodedToken: JwtPayload) => {
   return user;
 };
 
+const makeAdmin = async (
+  userId: string,
+  decodedToken: JwtPayload,
+) => {
+  // Only SUPER_ADMIN can make someone an ADMIN
+  if (decodedToken.role !== Role.SUPER_ADMIN) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Only super admin can make a user admin",
+    );
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user.role === Role.ADMIN) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Already an admin");
+  }
+
+  if (user.role === Role.SUPER_ADMIN) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Super admin cannot be converted to admin",
+    );
+  }
+
+  user.role = Role.ADMIN;
+
+  await user.save();
+
+  return user;
+};
+
 const applyForAgent = async (userId: string) => {
   const user = await User.findById(userId);
   if (!user) {
@@ -618,6 +654,7 @@ export const UserServices = {
   updateUser,
   updateUserProfile,
   makeAgent,
+  makeAdmin,
   applyForAgent,
   approveAgent,
   rejectAgent,

@@ -79,6 +79,11 @@ router.patch(
 );
 
 router.patch(
+  "/make-admin/:id",
+  checkAuth(Role.SUPER_ADMIN),
+  userControllers.makeAdmin,
+);
+router.patch(
   "/approve-agent/:id",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   userControllers.approveAgent,
@@ -107,7 +112,7 @@ router.patch(
 router.delete(
   "/:id",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-  userControllers.deleteUser
+  userControllers.deleteUser,
 );
 
 export const UserRoutes = router;

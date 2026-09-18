@@ -246,6 +246,22 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const makeAdmin = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  const result = await UserServices.makeAdmin(
+    req.params.id as string,
+    req.user as JwtPayload
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User has been promoted to admin successfully",
+    data: result,
+  });
+});
+
 
 
 
@@ -258,6 +274,7 @@ export const userControllers = {
   updateUser,
   getSingleUser,
   makeAgent,
+  makeAdmin,
   applyForAgent,
   approveAgent,
   rejectAgent,
