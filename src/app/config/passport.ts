@@ -22,7 +22,7 @@ passport.use(
         const isUserExist = await User.findOne({ email });
 
         if (!isUserExist) {
-          return done(null, false, { message: "Incorrect email or password." });
+          return done(null, false, { message: "User not found, Wrong email!!." });
         }
 
         if (isUserExist.isActive === IsActive.BLOCKED) {
@@ -60,7 +60,7 @@ passport.use(
         );
 
         if (!isPasswordMatched) {
-          return done(null, false, { message: "Incorrect email or password." });
+          return done(null, false, { message: "Incorrect password." });
         }
         return done(null, isUserExist);
       } catch (error) {
