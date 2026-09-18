@@ -644,6 +644,44 @@ const deleteUser = async (
   return null;
 };
 
+
+const makeUser = async (
+  userId: string,
+  decodedToken: JwtPayload,
+) => {
+  if (
+    decodedToken.role !== Role.ADMIN &&
+    decodedToken.role !== Role.SUPER_ADMIN
+  ) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized",
+    );
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if (user.role !== Role.AGENT) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "User is not an agent",
+    );
+  }
+
+  user.role = Role.USER;
+  user.isAgentApproved = false;
+  user.agentStatus = undefined;
+  user.agentStatusHistory = [];
+
+  await user.save();
+
+  return user;
+};
+
 export const UserServices = {
   createUser,
   getAllUsers,
@@ -662,4 +700,5 @@ export const UserServices = {
   reactivateAgent,
   deleteUser,
   lookupRecipient,
+  makeUser
 };

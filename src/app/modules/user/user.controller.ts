@@ -263,7 +263,19 @@ const makeAdmin = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+const makeUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.makeUser(
+    req.params.id as string,
+    req.user as JwtPayload
+  );
 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Agent has been converted back to user successfully",
+    data: result,
+  });
+});
 
 export const userControllers = {
   createUser,
@@ -282,5 +294,6 @@ export const userControllers = {
   reactivateAgent,
   updateUserProfile,
   deleteUser,
-  lookupRecipient
+  lookupRecipient,
+  makeUser
 };

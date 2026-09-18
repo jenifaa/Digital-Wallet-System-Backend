@@ -115,4 +115,10 @@ router.delete(
   userControllers.deleteUser,
 );
 
+
+router.patch(
+  "/make-user/:id",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  userControllers.makeUser,
+);
 export const UserRoutes = router;
